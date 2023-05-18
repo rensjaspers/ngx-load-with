@@ -68,7 +68,6 @@ export class NgxLoadWithDirective<T = unknown>
   @Input('ngxLoadWithErrorTemplate') errorTemplate?: TemplateRef<unknown>;
   @Input('ngxLoadWithDebounceTime') debounceTime = 0;
   @Input('ngxLoadWithStaleData') staleData = false;
-  @Input('ngxLoadWithReloadOnChanges') reloadOnChanges = true;
 
   @Output() debounceStart = new EventEmitter<void>();
   @Output() loadStart = new EventEmitter<T>();
@@ -124,10 +123,8 @@ export class NgxLoadWithDirective<T = unknown>
   }
 
   ngOnChanges(): void {
-    if (this.reloadOnChanges) {
-      this.cancel();
-      this.reload();
-    }
+    this.cancel();
+    this.reload();
   }
 
   ngOnDestroy(): void {
