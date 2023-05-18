@@ -62,7 +62,7 @@ type loadingPhaseHandlers<T> = {
 export class NgxLoadWithDirective<T = unknown>
   implements OnInit, OnChanges, OnDestroy
 {
-  @Input('ngxLoadWith') loadFn!: (args: any) => Observable<T>;
+  @Input('ngxLoadWith') loadFn!: (args: unknown) => Observable<T>;
   @Input('ngxLoadWithArgs') args: unknown;
   @Input('ngxLoadWithLoadingTemplate') loadingTemplate?: TemplateRef<unknown>;
   @Input('ngxLoadWithErrorTemplate') errorTemplate?: TemplateRef<unknown>;
@@ -176,8 +176,8 @@ export class NgxLoadWithDirective<T = unknown>
   }
 
   private getErrorState(
-    error: any
-  ): Observable<{ error: any; loaded: boolean; loading: boolean }> {
+    error: Error
+  ): Observable<{ error: Error; loaded: boolean; loading: boolean }> {
     return of({ ...this.stateUpdateCommands.errorState, error });
   }
 
@@ -256,7 +256,7 @@ export class NgxLoadWithDirective<T = unknown>
 
   static ngTemplateContextGuard<T>(
     _dir: NgxLoadWithDirective<T>,
-    _ctx: any
+    _ctx: unknown
   ): _ctx is LoadedTemplateContext<T> {
     return true;
   }
