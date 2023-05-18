@@ -45,7 +45,7 @@ In the example above, `myLoadFn` is a function that returns an observable that e
 
 ## API
 
-### ngxLoadWith directive
+### NgxLoadWithDirective
 
 The `ngxLoadWith` directive has the following inputs:
 
@@ -55,7 +55,6 @@ The `ngxLoadWith` directive has the following inputs:
 - `errorTemplate`: The template to display if an error occurs.
 - `debounceTime`: The number of milliseconds to debounce the reload trigger. Defaults to `0`.
 - `staleData`: A boolean indicating whether to display stale data while the observable is loading. Defaults to `false`.
-- `reloadOnChanges`: A boolean indicating whether to reload the observable when the inputs change. Defaults to `true`.
 
 ### LoadedTemplateContext interface
 
