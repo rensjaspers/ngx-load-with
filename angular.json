@@ -28,6 +28,7 @@
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
             "tsConfig": "projects/ngx-load-with/tsconfig.spec.json",
+            "karmaConfig": "projects/ngx-load-with/karma.conf.js",
             "polyfills": ["zone.js", "zone.js/testing"]
           }
         }
