@@ -5,6 +5,7 @@ import { NgxLoadWithModule } from './ngx-load-with.module';
 import {
   ComponentFixture,
   TestBed,
+  discardPeriodicTasks,
   fakeAsync,
   tick,
 } from '@angular/core/testing';
@@ -14,17 +15,27 @@ import { By } from '@angular/platform-browser';
   selector: 'ngx-test-component',
   template: `
     <div
-      id="data"
       *ngxLoadWith="
         getData as data;
+        args: args;
         loadingTemplate: loading;
-        errorTemplate: error
+        errorTemplate: error;
+        staleData: showStaleData;
+        debounceTime: debounceTime;
+        let debouncing = debouncing;
+        let reloading = reloading
       "
     >
-      {{ data }}
+      <div id="data">{{ data }}</div>
+      <div id="debouncing-after-initial-load">
+        {{ debouncing ? 'Debouncing' : 'Not debouncing' }}
+      </div>
     </div>
-    <ng-template #loading>
+    <ng-template #loading let-debouncing="debouncing">
       <div id="loading">Loading</div>
+      <div id="debouncing-before-initial-load">
+        {{ debouncing ? 'Debouncing' : 'Not debouncing' }}
+      </div>
     </ng-template>
     <ng-template #error let-error>
       <div id="error">{{ error.message }}</div>
@@ -32,6 +43,9 @@ import { By } from '@angular/platform-browser';
   `,
 })
 class TestComponent {
+  showStaleData = false;
+  debounceTime = 0;
+  args = 'foo';
   getData = () => interval(1000);
 }
 
@@ -96,5 +110,52 @@ describe('ngxLoadWithDirective', () => {
     expect(el.query(By.css('#error')).nativeElement.textContent.trim()).toEqual(
       'error'
     );
+  }));
+
+  it('should reload on args change', fakeAsync(() => {
+    createComponent();
+    component.showStaleData = false;
+    fixture.detectChanges();
+    tick(1000);
+    component.args = 'bar';
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(el.query(By.css('#loading'))).not.toBeNull();
+    expect(el.query(By.css('#data'))).toBeNull();
+    discardPeriodicTasks();
+  }));
+
+  it('should show stale data when configured so', fakeAsync(() => {
+    createComponent();
+    component.showStaleData = true;
+    fixture.detectChanges();
+    tick(1000);
+    component.args = 'bar';
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(el.query(By.css('#loading'))).toBeNull();
+    expect(el.query(By.css('#data'))).not.toBeNull();
+    discardPeriodicTasks();
+  }));
+
+  it('should debounce', fakeAsync(() => {
+    createComponent();
+    component.debounceTime = 1000;
+    fixture.detectChanges();
+    tick(500);
+    fixture.detectChanges();
+    expect(el.query(By.css('#loading'))).not.toBeNull();
+    expect(el.query(By.css('#data'))).toBeNull();
+    const getDebounceText = () =>
+      el
+        .query(By.css('#debouncing-before-initial-load'))
+        .nativeElement.textContent.trim();
+    expect(getDebounceText()).toEqual('Debouncing');
+    tick(501);
+    fixture.detectChanges();
+    expect(getDebounceText()).toEqual('Not debouncing');
+    discardPeriodicTasks();
   }));
 });
