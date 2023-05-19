@@ -63,7 +63,7 @@ export class NgxLoadWithDirective<T = unknown>
   implements OnInit, OnChanges, OnDestroy
 {
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  @Input('ngxLoadWith') loadFn!: (args: any) => Observable<T>;
+  @Input('ngxLoadWith') loadFn!: (args?: any) => Observable<T>;
   @Input('ngxLoadWithArgs') args: unknown;
   @Input('ngxLoadWithLoadingTemplate') loadingTemplate?: TemplateRef<unknown>;
   @Input('ngxLoadWithErrorTemplate') errorTemplate?: TemplateRef<unknown>;
