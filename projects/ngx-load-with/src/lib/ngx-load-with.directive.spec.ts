@@ -1,4 +1,4 @@
-import { Component, DebugElement } from '@angular/core';
+import { Component, DebugElement, ViewChild } from '@angular/core';
 import { interval, of, switchMap, throwError } from 'rxjs';
 import { NgxLoadWithModule } from './ngx-load-with.module';
 
@@ -10,9 +10,10 @@ import {
   tick,
 } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { NgxLoadWithDirective } from './ngx-load-with.directive';
 
 @Component({
-  selector: 'ngx-test-component',
+  selector: 'ngx-micro-syntax-test',
   template: `
     <div
       *ngxLoadWith="
@@ -42,41 +43,82 @@ import { By } from '@angular/platform-browser';
     </ng-template>
   `,
 })
-class TestComponent {
+class MicroSyntaxTestComponent {
   showStaleData = false;
   debounceTime = 0;
   args = 'foo';
   getData = () => interval(1000);
 }
 
+@Component({
+  selector: 'ngx-normal-syntax-test',
+  template: `
+    <ng-template
+      #loader="ngxLoadWith"
+      let-data
+      [ngxLoadWith]="getData"
+      [ngxLoadWithLoadingTemplate]="loading"
+      [ngxLoadWithErrorTemplate]="error"
+    >
+      <div id="data">{{ data }}</div>
+    </ng-template>
+    <ng-template #loading let-debouncing="debouncing">
+      <div id="loading">Loading</div>
+    </ng-template>
+    <ng-template #error let-error>
+      <div id="error">{{ error.message }}</div>
+    </ng-template>
+  `,
+})
+class NormalSyntaxTestComponent {
+  @ViewChild('loader') loader?: NgxLoadWithDirective;
+  getData = () => of('foo');
+}
+
 describe('ngxLoadWithDirective', () => {
-  let fixture: ComponentFixture<TestComponent>;
-  let component: TestComponent;
+  let fixture: ComponentFixture<MicroSyntaxTestComponent>;
+  let component: MicroSyntaxTestComponent;
   let el: DebugElement;
+  let normalSyntaxFixture: ComponentFixture<NormalSyntaxTestComponent>;
+  let normalSyntaxComponent: NormalSyntaxTestComponent;
+  let normalSyntaxEl: DebugElement;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [NgxLoadWithModule],
-      declarations: [TestComponent],
+      declarations: [MicroSyntaxTestComponent, NormalSyntaxTestComponent],
     }).compileComponents();
   });
 
-  const createComponent = (template?: string) => {
+  const createMicroSyntaxComponent = (template?: string) => {
     if (template) {
-      TestBed.overrideComponent(TestComponent, { set: { template } });
+      TestBed.overrideComponent(MicroSyntaxTestComponent, {
+        set: { template },
+      });
     }
-    fixture = TestBed.createComponent(TestComponent);
+    fixture = TestBed.createComponent(MicroSyntaxTestComponent);
     component = fixture.componentInstance;
     el = fixture.debugElement;
   };
 
+  const createNormalSyntaxComponent = (template?: string) => {
+    if (template) {
+      TestBed.overrideComponent(NormalSyntaxTestComponent, {
+        set: { template },
+      });
+    }
+    normalSyntaxFixture = TestBed.createComponent(NormalSyntaxTestComponent);
+    normalSyntaxComponent = normalSyntaxFixture.componentInstance;
+    normalSyntaxEl = normalSyntaxFixture.debugElement;
+  };
+
   it('should create host', () => {
-    createComponent();
+    createMicroSyntaxComponent();
     expect(component).toBeDefined();
   });
 
   it('should render the templates', fakeAsync(() => {
-    createComponent();
+    createMicroSyntaxComponent();
     /**
      * An observable that emits once and then errors after a delay of 1 second.
      */
@@ -113,7 +155,7 @@ describe('ngxLoadWithDirective', () => {
   }));
 
   it('should reload on args change', fakeAsync(() => {
-    createComponent();
+    createMicroSyntaxComponent();
     component.showStaleData = false;
     fixture.detectChanges();
     tick(1000);
@@ -127,7 +169,7 @@ describe('ngxLoadWithDirective', () => {
   }));
 
   it('should show stale data when configured so', fakeAsync(() => {
-    createComponent();
+    createMicroSyntaxComponent();
     component.showStaleData = true;
     fixture.detectChanges();
     tick(1000);
@@ -141,7 +183,7 @@ describe('ngxLoadWithDirective', () => {
   }));
 
   it('should debounce', fakeAsync(() => {
-    createComponent();
+    createMicroSyntaxComponent();
     component.debounceTime = 1000;
     fixture.detectChanges();
     tick(500);
@@ -157,5 +199,43 @@ describe('ngxLoadWithDirective', () => {
     fixture.detectChanges();
     expect(getDebounceText()).toEqual('Not debouncing');
     discardPeriodicTasks();
+  }));
+
+  it('should update the loading state with the provided data using setData()', fakeAsync(() => {
+    createNormalSyntaxComponent();
+    normalSyntaxFixture.detectChanges();
+    tick();
+    const testData = 'Test Data';
+    normalSyntaxComponent.loader!.setData(testData);
+    tick();
+    normalSyntaxFixture.detectChanges();
+
+    // Verify that the loaded data is rendered correctly
+    expect(
+      normalSyntaxEl.query(By.css('#data')).nativeElement.textContent.trim()
+    ).toEqual(testData);
+
+    // Verify that the loading template and error template are not rendered
+    expect(normalSyntaxEl.query(By.css('#loading'))).toBeNull();
+    expect(normalSyntaxEl.query(By.css('#error'))).toBeNull();
+  }));
+
+  it('should update the loading state with the provided error using setError()', fakeAsync(() => {
+    createNormalSyntaxComponent();
+    normalSyntaxFixture.detectChanges();
+    tick();
+    const testError = new Error('Test Error');
+    normalSyntaxComponent.loader!.setError(testError);
+    tick();
+    normalSyntaxFixture.detectChanges();
+
+    // Verify that the loaded error is rendered correctly
+    expect(
+      normalSyntaxEl.query(By.css('#error')).nativeElement.textContent.trim()
+    ).toEqual(testError.message);
+
+    // Verify that the loading template and error template are not rendered
+    expect(normalSyntaxEl.query(By.css('#loading'))).toBeNull();
+    expect(normalSyntaxEl.query(By.css('#data'))).toBeNull();
   }));
 });
