@@ -115,14 +115,6 @@ export class NgxLoadWithDirective<T = unknown>
     this.reload();
   }
 
-  private handleLoadingState(state: LoadingState<T>) {
-    const phase = this.getLoadingPhase(state);
-    this.viewContainer.clear();
-    const handler = this.loadingPhaseHandlers[phase];
-    handler(state);
-    this.changeDetectorRef.markForCheck();
-  }
-
   ngOnChanges(): void {
     this.cancel();
     this.reload();
@@ -253,6 +245,14 @@ export class NgxLoadWithDirective<T = unknown>
       reloading: true,
       debouncing: state.debouncing,
     });
+  }
+
+  private handleLoadingState(state: LoadingState<T>) {
+    const phase = this.getLoadingPhase(state);
+    this.viewContainer.clear();
+    const handler = this.loadingPhaseHandlers[phase];
+    handler(state);
+    this.changeDetectorRef.markForCheck();
   }
 
   static ngTemplateContextGuard<T>(
