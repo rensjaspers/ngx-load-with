@@ -10,7 +10,7 @@ import {
   tick,
 } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NgxLoadWithDirective } from 'ngx-load-with';
+import { NgxLoadWithDirective } from './ngx-load-with.directive';
 
 @Component({
   selector: 'ngx-micro-syntax-test',
