@@ -89,11 +89,11 @@ export class NgxLoadWithDirective<T = unknown>
   };
 
   private readonly stateUpdateCommands = {
-    initialState: { loading: false, loaded: false },
-    debouncingState: { loading: true, error: null, debouncing: true },
-    loadingState: { loading: true, error: null, debouncing: false },
-    loadedState: { loaded: true, loading: false },
-    errorState: { loaded: false, loading: false },
+    initial: { loading: false, loaded: false },
+    debouncing: { loading: true, error: null, debouncing: true },
+    loading: { loading: true, error: null, debouncing: false },
+    loaded: { loaded: true, loading: false },
+    error: { loaded: false, loading: false },
   };
 
   constructor(
@@ -151,7 +151,7 @@ export class NgxLoadWithDirective<T = unknown>
     ).pipe(
       scan(
         (state, update) => ({ ...state, ...update }),
-        this.stateUpdateCommands.initialState
+        this.stateUpdateCommands.initial
       )
     );
   }
@@ -179,7 +179,7 @@ export class NgxLoadWithDirective<T = unknown>
   private getErrorState(
     error: Error
   ): Observable<{ error: Error; loaded: boolean; loading: boolean }> {
-    return of({ ...this.stateUpdateCommands.errorState, error });
+    return of({ ...this.stateUpdateCommands.error, error });
   }
 
   private getLoadedState(data: T): {
@@ -187,20 +187,20 @@ export class NgxLoadWithDirective<T = unknown>
     loaded: boolean;
     loading: boolean;
   } {
-    return { ...this.stateUpdateCommands.loadedState, data };
+    return { ...this.stateUpdateCommands.loaded, data };
   }
 
   private getLoadingUpdates(debouncedReload$: Observable<void>) {
     return debouncedReload$.pipe(
       tap(() => this.loadStart.emit()),
-      map(() => this.stateUpdateCommands.loadingState)
+      map(() => this.stateUpdateCommands.loading)
     );
   }
 
   private getDebouncingUpdates() {
     return this.reloadTrigger.pipe(
       tap(() => this.debounceStart.emit()),
-      map(() => this.stateUpdateCommands.debouncingState)
+      map(() => this.stateUpdateCommands.debouncing)
     );
   }
 
