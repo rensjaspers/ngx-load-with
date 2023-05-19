@@ -14,7 +14,7 @@ import {
   Observable,
   Subject,
   catchError,
-  debounceTime,
+  debounce,
   finalize,
   map,
   merge,
@@ -23,6 +23,7 @@ import {
   switchMap,
   takeUntil,
   tap,
+  timer,
 } from 'rxjs';
 
 export interface LoadingState<T = unknown> {
@@ -134,7 +135,7 @@ export class NgxLoadWithDirective<T = unknown>
 
   private getLoadingState(): Observable<LoadingState<T>> {
     const debouncedReload$ = this.reloadTrigger.pipe(
-      debounceTime(this.debounceTime)
+      debounce(() => timer(this.debounceTime))
     );
     return merge(
       this.getDebouncingUpdates(),
