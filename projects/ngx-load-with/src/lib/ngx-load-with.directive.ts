@@ -177,7 +177,6 @@ export class NgxLoadWithDirective<T = unknown>
   }
 
   ngOnChanges(): void {
-    this.cancel();
     this.reload();
   }
 
@@ -231,7 +230,12 @@ export class NgxLoadWithDirective<T = unknown>
   }
 
   private getLoadResultUpdates(debouncedReload$: Observable<void>) {
-    const stop$ = merge(this.cancelTrigger, this.destroyed, this.stateOverride);
+    const stop$ = merge(
+      this.cancelTrigger,
+      this.destroyed,
+      this.stateOverride,
+      this.reloadTrigger
+    );
     return debouncedReload$.pipe(
       switchMap(() =>
         this.loadFn(this.args).pipe(
