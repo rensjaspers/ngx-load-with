@@ -63,24 +63,84 @@ type loadingPhaseHandlers<T> = {
 export class NgxLoadWithDirective<T = unknown>
   implements OnInit, OnChanges, OnDestroy
 {
+  /**
+   * A function that returns an Observable of the data to be loaded. The function can optionally take an argument of any type.
+   * The Observable should emit the data to be loaded, and complete when the data has been fully loaded.
+   * If an error occurs while loading the data, the Observable should emit an error.
+   */
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   @Input('ngxLoadWith') loadFn!: (args?: any) => Observable<T>;
+
+  /**
+   * An optional argument to be passed to the `loadFn` function. Changes to this argument will trigger a reload.
+   */
   @Input('ngxLoadWithArgs') args: unknown;
-  @Input('ngxLoadWithLoadingTemplate') loadingTemplate?: TemplateRef<unknown>;
-  @Input('ngxLoadWithErrorTemplate') errorTemplate?: TemplateRef<unknown>;
+
+  /**
+   * An optional template to be displayed while the data is being loaded.
+   * The template can access the `debouncing` property of the `LoadingTemplateContext` interface.
+   */
+  @Input('ngxLoadWithLoadingTemplate')
+  loadingTemplate?: TemplateRef<LoadingTemplateContext>;
+
+  /**
+   * An optional template to be displayed when an error occurs while loading the data.
+   * The template can access the `$implicit` property of the `ErrorTemplateContext` interface, which contains the error object.
+   * The template can also access the `retry` function, which can be called to retry loading the data.
+   */
+  @Input('ngxLoadWithErrorTemplate')
+  errorTemplate?: TemplateRef<ErrorTemplateContext>;
+
+  /**
+   * The amount of time in milliseconds to wait before triggering a reload when the `ngxLoadWithArgs` input changes.
+   * If set to 0, the reload will be triggered immediately.
+   */
   @Input('ngxLoadWithDebounceTime') debounceTime = 0;
+
+  /**
+   * A boolean indicating whether to use stale data when reloading.
+   * If set to true, the directive will use the previously loaded data while reloading.
+   * If set to false (default), the directive will clear the previously loaded data before reloading.
+   */
   @Input('ngxLoadWithStaleData') staleData = false;
 
+  /**
+   * An event emitted when the debounce timer starts.
+   */
   @Output() debounceStart = new EventEmitter<void>();
-  @Output() loadStart = new EventEmitter<T>();
+
+  /**
+   * An event emitted when the data loading process starts.
+   */
+  @Output() loadStart = new EventEmitter<void>();
+
+  /**
+   * An event emitted when the data loading process is successful.
+   * The event payload is the loaded data of type `T`.
+   */
   @Output() loadSuccess = new EventEmitter<T>();
+
+  /**
+   * An event emitted when an error occurs while loading the data.
+   * The event payload is the error object of type `Error`.
+   */
   @Output() loadError = new EventEmitter<Error>();
-  @Output() loadFinish = new EventEmitter<Error>();
+
+  /**
+   * An event emitted when the data loading process finishes, regardless of whether it was successful or not.
+   */
+  @Output() loadFinish = new EventEmitter<void>();
+
+  /**
+   * An event emitted when the loading state changes.
+   * The event payload is the current loading state of type `LoadingState<T>`.
+   */
   @Output() loadingStateChange = new EventEmitter<LoadingState<T>>();
 
   private readonly reloadTrigger = new Subject<void>();
   private readonly cancelTrigger = new Subject<void>();
   private readonly destroyed = new Subject<void>();
+  private readonly stateOverride = new Subject<Partial<LoadingState<T>>>();
 
   private readonly loadingPhaseHandlers: loadingPhaseHandlers<T> = {
     loading: (state) => this.showLoading(state),
@@ -93,8 +153,8 @@ export class NgxLoadWithDirective<T = unknown>
     initial: { loading: false, loaded: false },
     debouncing: { loading: true, error: null, debouncing: true },
     loading: { loading: true, error: null, debouncing: false },
-    loaded: { loaded: true, loading: false },
-    error: { loaded: false, loading: false },
+    loaded: { loaded: true, loading: false, debouncing: false },
+    error: { loaded: false, loading: false, debouncing: false },
   };
 
   constructor(
@@ -125,12 +185,32 @@ export class NgxLoadWithDirective<T = unknown>
     this.destroyed.next();
   }
 
-  reload() {
+  /**
+   * Triggers a reload of the data. Previous load requests are cancelled.
+   */
+  reload(): void {
     this.reloadTrigger.next();
   }
 
-  cancel() {
+  /**
+   * Cancels any pending load requests.
+   */
+  cancel(): void {
     this.cancelTrigger.next();
+  }
+
+  /**
+   * Updates the loading state as if the passed data were loaded through the `loadWith` function.
+   */
+  setData(data: T): void {
+    this.stateOverride.next(this.getLoadedState(data));
+  }
+
+  /**
+   * Updates the loading state as if the passed error were thrown by `loadWith` function.
+   */
+  setError(error: Error): void {
+    this.stateOverride.next(this.getErrorState(error));
   }
 
   private getLoadingState(): Observable<LoadingState<T>> {
@@ -140,7 +220,8 @@ export class NgxLoadWithDirective<T = unknown>
     return merge(
       this.getDebouncingUpdates(),
       this.getLoadingUpdates(debouncedReload$),
-      this.getLoadResultUpdates(debouncedReload$)
+      this.getLoadResultUpdates(debouncedReload$),
+      this.stateOverride
     ).pipe(
       scan(
         (state, update) => ({ ...state, ...update }),
@@ -150,17 +231,18 @@ export class NgxLoadWithDirective<T = unknown>
   }
 
   private getLoadResultUpdates(debouncedReload$: Observable<void>) {
+    const stop$ = merge(this.cancelTrigger, this.destroyed, this.stateOverride);
     return debouncedReload$.pipe(
       switchMap(() =>
         this.loadFn(this.args).pipe(
           tap((data) => this.loadSuccess.emit(data)),
           map((data) => this.getLoadedState(data)),
           catchError((error) =>
-            this.getErrorState(error).pipe(
+            of(this.getErrorState(error)).pipe(
               tap(() => this.loadError.emit(error))
             )
           ),
-          takeUntil(this.cancelTrigger),
+          takeUntil(stop$),
           finalize(() => {
             this.loadFinish.emit();
           })
@@ -169,17 +251,11 @@ export class NgxLoadWithDirective<T = unknown>
     );
   }
 
-  private getErrorState(
-    error: Error
-  ): Observable<{ error: Error; loaded: boolean; loading: boolean }> {
-    return of({ ...this.stateUpdateCommands.error, error });
+  private getErrorState(error: Error) {
+    return { ...this.stateUpdateCommands.error, error };
   }
 
-  private getLoadedState(data: T): {
-    data: T;
-    loaded: boolean;
-    loading: boolean;
-  } {
+  private getLoadedState(data: T) {
     return { ...this.stateUpdateCommands.loaded, data };
   }
 
