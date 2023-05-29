@@ -6,12 +6,9 @@ import {
   fakeAsync,
   tick,
 } from '@angular/core/testing';
-import { delay, interval, map, of, throwError, timer } from 'rxjs';
-import {
-  ErrorTemplateContext,
-  NgxLoadWithDirective,
-} from './ngx-load-with.directive';
 import { By } from '@angular/platform-browser';
+import { delay, interval, map, of, throwError, timer } from 'rxjs';
+import { NgxLoadWithDirective } from './ngx-load-with.directive';
 
 @Component({
   template: `
@@ -204,4 +201,31 @@ describe('NgxLoadWithDirective', () => {
     // remember to discard any remaining timers
     discardPeriodicTasks();
   }));
+
+  it('should set data when setData is called', fakeAsync(() => {
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    component.loader.setData('foo');
+    fixture.detectChanges();
+
+    expect(getTextContent()).toEqual('foo');
+  }));
+
+  it('should display error when setError is called', fakeAsync(() => {
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    component.loader.setError(new Error('test error'));
+    fixture.detectChanges();
+
+    expect(getTextContent()).toEqual('test error');
+  }));
+
+  it('should have ngTemplateContextGuard method that always returns true', () => {
+    expect(NgxLoadWithDirective.ngTemplateContextGuard).toBeDefined();
+    expect(
+      NgxLoadWithDirective.ngTemplateContextGuard(null as any, null)
+    ).toEqual(true);
+  });
 });
