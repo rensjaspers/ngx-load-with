@@ -1,6 +1,7 @@
 import {
   ChangeDetectorRef,
   Directive,
+  EmbeddedViewRef,
   EventEmitter,
   Input,
   OnChanges,
@@ -14,6 +15,7 @@ import {
   Observable,
   Subject,
   catchError,
+  concat,
   debounce,
   finalize,
   map,
@@ -29,7 +31,6 @@ import {
 export interface LoadingState<T = unknown> {
   loading: boolean;
   loaded: boolean;
-  debouncing?: boolean;
   error?: Error | null;
   data?: T;
 }
@@ -37,12 +38,7 @@ export interface LoadingState<T = unknown> {
 export interface LoadedTemplateContext<T = unknown> {
   $implicit: T;
   ngxLoadWith: T;
-  reloading: boolean;
-  debouncing: boolean;
-}
-
-export interface LoadingTemplateContext {
-  debouncing: boolean;
+  loading: boolean;
 }
 
 export interface ErrorTemplateContext {
@@ -50,7 +46,7 @@ export interface ErrorTemplateContext {
   retry: () => void;
 }
 
-type LoadingPhase = 'loading' | 'reloading' | 'loaded' | 'error';
+type LoadingPhase = 'loading' | 'loaded' | 'error';
 
 type loadingPhaseHandlers<T> = {
   [K in LoadingPhase]: (state: LoadingState<T>) => void;
@@ -81,7 +77,7 @@ export class NgxLoadWithDirective<T = unknown>
    * The template can access the `debouncing` property of the `LoadingTemplateContext` interface.
    */
   @Input('ngxLoadWithLoadingTemplate')
-  loadingTemplate?: TemplateRef<LoadingTemplateContext>;
+  loadingTemplate?: TemplateRef<unknown>;
 
   /**
    * An optional template to be displayed when an error occurs while loading the data.
@@ -103,11 +99,6 @@ export class NgxLoadWithDirective<T = unknown>
    * If set to false (default), the directive will clear the previously loaded data before reloading.
    */
   @Input('ngxLoadWithStaleData') staleData = false;
-
-  /**
-   * An event emitted when the debounce timer starts.
-   */
-  @Output() debounceStart = new EventEmitter<void>();
 
   /**
    * An event emitted when the data loading process starts.
@@ -137,25 +128,33 @@ export class NgxLoadWithDirective<T = unknown>
    */
   @Output() loadingStateChange = new EventEmitter<LoadingState<T>>();
 
-  private readonly reloadTrigger = new Subject<void>();
+  private loadedViewRef?: EmbeddedViewRef<LoadedTemplateContext<T>>;
+
+  private readonly loadTrigger = new Subject<void>();
   private readonly cancelTrigger = new Subject<void>();
   private readonly destroyed = new Subject<void>();
   private readonly stateOverride = new Subject<Partial<LoadingState<T>>>();
+  private readonly stop$ = merge(this.cancelTrigger, this.stateOverride);
+
+  private readonly initialState: LoadingState<T> = {
+    loading: false,
+    loaded: false,
+  };
 
   private readonly loadingPhaseHandlers: loadingPhaseHandlers<T> = {
-    loading: (state) => this.showLoading(state),
-    reloading: (state) => this.showReloading(state),
-    loaded: (state) => this.showLoaded(state),
-    error: (state) => this.showError(state),
+    loading: () => this.onLoading(),
+    loaded: (state) => this.onLoaded(state),
+    error: (state) => this.onError(state),
   };
 
-  private readonly stateUpdateCommands = {
-    initial: { loading: false, loaded: false },
-    debouncing: { loading: true, error: null, debouncing: true },
-    loading: { loading: true, error: null, debouncing: false },
-    loaded: { loaded: true, loading: false, debouncing: false },
-    error: { loaded: false, loading: false, debouncing: false },
-  };
+  private readonly loadingState$: Observable<LoadingState<T>> = concat(
+    of(this.initialState),
+    merge(
+      this.stateOverride,
+      this.getBeforeResultStateUpdates(),
+      this.getAfterResultStateUpdates()
+    )
+  ).pipe(scan((state, update) => ({ ...state, ...update }), this.initialState));
 
   constructor(
     private templateRef: TemplateRef<LoadedTemplateContext<T>>,
@@ -164,20 +163,12 @@ export class NgxLoadWithDirective<T = unknown>
   ) {}
 
   ngOnInit(): void {
-    this.getLoadingState()
-      .pipe(
-        tap((state) => {
-          this.handleLoadingState(state);
-          this.loadingStateChange.emit(state);
-        }),
-        takeUntil(this.destroyed)
-      )
-      .subscribe();
-    this.reload();
+    this.trackAndHandleLoadingState();
+    this.load();
   }
 
   ngOnChanges(): void {
-    this.reload();
+    this.load();
   }
 
   ngOnDestroy(): void {
@@ -187,8 +178,9 @@ export class NgxLoadWithDirective<T = unknown>
   /**
    * Triggers a reload of the data. Previous load requests are cancelled.
    */
-  reload(): void {
-    this.reloadTrigger.next();
+  load(): void {
+    this.cancel();
+    this.loadTrigger.next();
   }
 
   /**
@@ -202,138 +194,131 @@ export class NgxLoadWithDirective<T = unknown>
    * Updates the loading state as if the passed data were loaded through the `loadWith` function.
    */
   setData(data: T): void {
-    this.stateOverride.next(this.getLoadedState(data));
+    this.cancel();
+    this.stateOverride.next({
+      loaded: true,
+      loading: false,
+      data,
+      error: null,
+    });
   }
 
   /**
    * Updates the loading state as if the passed error were thrown by `loadWith` function.
    */
   setError(error: Error): void {
-    this.stateOverride.next(this.getErrorState(error));
+    this.stateOverride.next({ error });
   }
 
-  private getLoadingState(): Observable<LoadingState<T>> {
-    const debouncedReload$ = this.reloadTrigger.pipe(
-      debounce(() => timer(this.debounceTime))
-    );
-    return merge(
-      this.getDebouncingUpdates(),
-      this.getLoadingUpdates(debouncedReload$),
-      this.getLoadResultUpdates(debouncedReload$),
-      this.stateOverride
-    ).pipe(
-      scan(
-        (state, update) => ({ ...state, ...update }),
-        this.stateUpdateCommands.initial
+  private trackAndHandleLoadingState() {
+    this.loadingState$
+      .pipe(
+        tap((state) => {
+          this.handleLoadingPhase(state);
+        }),
+        takeUntil(this.destroyed)
       )
+      .subscribe();
+  }
+
+  private handleLoadingPhase(state: LoadingState<T>) {
+    this.loadingStateChange.emit(state);
+    const phase = this.getLoadingPhase(state);
+    this.loadingPhaseHandlers[phase](state);
+    this.changeDetectorRef.markForCheck();
+  }
+
+  private getAfterResultStateUpdates() {
+    return this.loadTrigger.pipe(
+      debounce(() => this.getDebounceFinished()),
+      tap(() => {
+        this.loadStart.emit();
+      }),
+      switchMap(() => this.loadData())
     );
   }
 
-  private getLoadResultUpdates(debouncedReload$: Observable<void>) {
-    const stop$ = merge(
-      this.cancelTrigger,
-      this.destroyed,
-      this.stateOverride,
-      this.reloadTrigger
-    );
-    return debouncedReload$.pipe(
-      switchMap(() =>
-        this.loadFn(this.args).pipe(
-          tap((data) => this.loadSuccess.emit(data)),
-          map((data) => this.getLoadedState(data)),
-          catchError((error) =>
-            of(this.getErrorState(error)).pipe(
-              tap(() => this.loadError.emit(error))
-            )
-          ),
-          takeUntil(stop$),
-          finalize(() => {
-            this.loadFinish.emit();
-          })
-        )
-      )
+  private loadData(): Observable<
+    | { loading: boolean; loaded: boolean; data: T }
+    | { loading: boolean; error: Error }
+  > {
+    return this.loadFn(this.args).pipe(
+      tap((data) => {
+        this.loadSuccess.emit(data);
+      }),
+      map((data) => ({ loading: false, loaded: true, data })),
+      catchError((error) => this.catchDataLoadingError(error)),
+      finalize(() => {
+        this.loadFinish.emit();
+      }),
+      takeUntil(this.stop$)
     );
   }
 
-  private getErrorState(error: Error) {
-    return { ...this.stateUpdateCommands.error, error };
-  }
-
-  private getLoadedState(data: T) {
-    return { ...this.stateUpdateCommands.loaded, data };
-  }
-
-  private getLoadingUpdates(debouncedReload$: Observable<void>) {
-    return debouncedReload$.pipe(
-      tap(() => this.loadStart.emit()),
-      map(() => this.stateUpdateCommands.loading)
+  private catchDataLoadingError(
+    error: Error
+  ): Observable<{ loading: boolean; error: Error }> {
+    return of({ loading: false, error }).pipe(
+      tap(() => {
+        this.loadError.emit(error);
+      })
     );
   }
 
-  private getDebouncingUpdates() {
-    return this.reloadTrigger.pipe(
-      tap(() => this.debounceStart.emit()),
-      map(() => this.stateUpdateCommands.debouncing)
-    );
+  private getDebounceFinished() {
+    return timer(this.debounceTime || 0).pipe(takeUntil(this.stop$));
   }
 
-  private getLoadingPhase(state: LoadingState<T>) {
+  private getBeforeResultStateUpdates() {
+    return this.loadTrigger.pipe(map(() => ({ loading: true, error: null })));
+  }
+
+  private getLoadingPhase(state: LoadingState<T>): LoadingPhase {
     if (state.error) {
       return 'error';
-    } else if (state.loading) {
-      if (state.loaded) {
-        return 'reloading';
-      }
-      return 'loading';
     }
-    return 'loaded';
+    if (state.loaded && (!state.loading || this.staleData)) {
+      return 'loaded';
+    }
+    return 'loading';
   }
 
-  private showError({ error }: LoadingState): void {
+  private onError(state: LoadingState<T>): void {
+    this.clearViewContainer();
     if (this.errorTemplate) {
       this.viewContainer.createEmbeddedView(this.errorTemplate, {
-        $implicit: error,
-        retry: () => this.reload(),
+        $implicit: state.error as Error,
+        retry: () => this.load(),
       });
     }
   }
 
-  private showLoading({ debouncing }: LoadingState<T>): void {
+  private onLoading(): void {
+    this.clearViewContainer();
     if (this.loadingTemplate) {
-      this.viewContainer.createEmbeddedView(this.loadingTemplate, {
-        debouncing,
-      });
+      this.viewContainer.createEmbeddedView(this.loadingTemplate);
     }
   }
 
-  private showLoaded({ data }: LoadingState<T>): void {
-    this.viewContainer.createEmbeddedView(this.templateRef, {
-      $implicit: data,
-      ngxLoadWith: data,
-      reloading: false,
-      debouncing: false,
-    });
-  }
-
-  private showReloading(state: LoadingState<T>): void {
-    if (!this.staleData) {
-      this.showLoading(state);
-      return;
+  private onLoaded(state: LoadingState<T>): void {
+    const data = state.data as T;
+    const loading = state.loading;
+    if (this.loadedViewRef) {
+      this.loadedViewRef.context.$implicit = data;
+      this.loadedViewRef.context.ngxLoadWith = data;
+      this.loadedViewRef.context.loading = loading;
+    } else {
+      this.clearViewContainer();
+      this.loadedViewRef = this.viewContainer.createEmbeddedView(
+        this.templateRef,
+        { $implicit: data, ngxLoadWith: data, loading }
+      );
     }
-    this.viewContainer.createEmbeddedView(this.templateRef, {
-      $implicit: state.data,
-      ngxLoadWith: state.data,
-      reloading: true,
-      debouncing: state.debouncing,
-    });
   }
 
-  private handleLoadingState(state: LoadingState<T>) {
-    const phase = this.getLoadingPhase(state);
+  private clearViewContainer() {
     this.viewContainer.clear();
-    const handler = this.loadingPhaseHandlers[phase];
-    handler(state);
-    this.changeDetectorRef.markForCheck();
+    this.loadedViewRef = undefined;
   }
 
   static ngTemplateContextGuard<T>(

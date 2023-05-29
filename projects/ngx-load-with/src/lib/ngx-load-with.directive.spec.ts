@@ -1,7 +1,6 @@
-import { Component, DebugElement, ViewChild } from '@angular/core';
-import { interval, of, switchMap, throwError } from 'rxjs';
-import { NgxLoadWithModule } from './ngx-load-with.module';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { Component, ViewChild } from '@angular/core';
 import {
   ComponentFixture,
   TestBed,
@@ -10,232 +9,257 @@ import {
   tick,
 } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { delay, interval, map, of, throwError, timer } from 'rxjs';
 import { NgxLoadWithDirective } from './ngx-load-with.directive';
 
 @Component({
-  selector: 'ngx-micro-syntax-test',
   template: `
-    <div
-      *ngxLoadWith="
-        getData as data;
-        args: args;
-        loadingTemplate: loading;
-        errorTemplate: error;
-        staleData: showStaleData;
-        debounceTime: debounceTime;
-        let debouncing = debouncing;
-        let reloading = reloading
-      "
-    >
-      <div id="data">{{ data }}</div>
-      <div id="debouncing-after-initial-load">
-        {{ debouncing ? 'Debouncing' : 'Not debouncing' }}
-      </div>
-    </div>
-    <ng-template #loading let-debouncing="debouncing">
-      <div id="loading">Loading</div>
-      <div id="debouncing-before-initial-load">
-        {{ debouncing ? 'Debouncing' : 'Not debouncing' }}
-      </div>
-    </ng-template>
-    <ng-template #error let-error>
-      <div id="error">{{ error.message }}</div>
-    </ng-template>
-  `,
-})
-class MicroSyntaxTestComponent {
-  showStaleData = false;
-  debounceTime = 0;
-  args = 'foo';
-  getData = () => interval(1000);
-}
-
-@Component({
-  selector: 'ngx-normal-syntax-test',
-  template: `
+    <button id="load" (click)="loader.load()"></button>
     <ng-template
       #loader="ngxLoadWith"
-      let-data
-      [ngxLoadWith]="getData"
+      [ngxLoadWith]="loadFn"
+      [ngxLoadWithArgs]="args"
       [ngxLoadWithLoadingTemplate]="loading"
       [ngxLoadWithErrorTemplate]="error"
+      [ngxLoadWithDebounceTime]="debounceTime"
+      [ngxLoadWithStaleData]="staleData"
+      let-data
+      let-loading="loading"
     >
-      <div id="data">{{ data }}</div>
+      {{ data }}{{ loading ? '(reloading)' : '' }}
     </ng-template>
-    <ng-template #loading let-debouncing="debouncing">
-      <div id="loading">Loading</div>
-    </ng-template>
-    <ng-template #error let-error>
-      <div id="error">{{ error.message }}</div>
+    <ng-template #loading>loading</ng-template>
+    <ng-template #error let-error let-retry="retry">
+      {{ error.message }} <button id="retry" (click)="retry()"></button>
     </ng-template>
   `,
 })
-class NormalSyntaxTestComponent {
-  @ViewChild('loader') loader?: NgxLoadWithDirective;
-  getData = () => of('foo');
+class TestComponent {
+  @ViewChild('loader') loader!: NgxLoadWithDirective;
+  debounceTime?: number;
+  staleData?: boolean;
+  args?: unknown;
+
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any,@typescript-eslint/no-unused-vars
+  loadFn = (_args: any) => of('test' as any);
 }
 
-describe('ngxLoadWithDirective', () => {
-  let fixture: ComponentFixture<MicroSyntaxTestComponent>;
-  let component: MicroSyntaxTestComponent;
-  let el: DebugElement;
-  let normalSyntaxFixture: ComponentFixture<NormalSyntaxTestComponent>;
-  let normalSyntaxComponent: NormalSyntaxTestComponent;
-  let normalSyntaxEl: DebugElement;
+describe('NgxLoadWithDirective', () => {
+  let component: TestComponent;
+  let fixture: ComponentFixture<TestComponent>;
+  const getTextContent = () => fixture.nativeElement.textContent.trim();
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      imports: [NgxLoadWithModule],
-      declarations: [MicroSyntaxTestComponent, NormalSyntaxTestComponent],
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [TestComponent, NgxLoadWithDirective],
     }).compileComponents();
-  });
 
-  const createMicroSyntaxComponent = (template?: string) => {
-    if (template) {
-      TestBed.overrideComponent(MicroSyntaxTestComponent, {
-        set: { template },
-      });
-    }
-    fixture = TestBed.createComponent(MicroSyntaxTestComponent);
+    fixture = TestBed.createComponent(TestComponent);
     component = fixture.componentInstance;
-    el = fixture.debugElement;
-  };
-
-  const createNormalSyntaxComponent = (template?: string) => {
-    if (template) {
-      TestBed.overrideComponent(NormalSyntaxTestComponent, {
-        set: { template },
-      });
-    }
-    normalSyntaxFixture = TestBed.createComponent(NormalSyntaxTestComponent);
-    normalSyntaxComponent = normalSyntaxFixture.componentInstance;
-    normalSyntaxEl = normalSyntaxFixture.debugElement;
-  };
-
-  it('should create host', () => {
-    createMicroSyntaxComponent();
-    expect(component).toBeDefined();
   });
 
-  it('should render the templates', fakeAsync(() => {
-    createMicroSyntaxComponent();
-    /**
-     * An observable that emits once and then errors after a delay of 1 second.
-     */
-    const emitOnceAndThrow = interval(1000).pipe(
-      switchMap((i) => (i > 0 ? throwError(() => new Error('error')) : of(i)))
-    );
-    component.getData = () => emitOnceAndThrow;
-    fixture.detectChanges();
-
-    expect(
-      el.query(By.css('#loading')).nativeElement.textContent.trim()
-    ).toEqual('Loading');
-    expect(el.query(By.css('#data'))).toBeNull();
-    expect(el.query(By.css('#error'))).toBeNull();
-
-    // Wait for the observable to emit
-    tick(1000);
-    fixture.detectChanges(); // Wait for the async operation to complete
-
-    expect(el.query(By.css('#loading'))).toBeNull();
-    expect(el.query(By.css('#data')).nativeElement.textContent.trim()).toEqual(
-      '0'
-    );
-    expect(el.query(By.css('#error'))).toBeNull();
-
-    // Wait for the error to be thrown
-    tick(1000);
-    fixture.detectChanges();
-    expect(el.query(By.css('#loading'))).toBeNull();
-    expect(el.query(By.css('#data'))).toBeNull();
-    expect(el.query(By.css('#error')).nativeElement.textContent.trim()).toEqual(
-      'error'
-    );
-  }));
-
-  it('should reload on args change', fakeAsync(() => {
-    createMicroSyntaxComponent();
-    component.showStaleData = false;
-    fixture.detectChanges();
-    tick(1000);
-    component.args = 'bar';
+  it('should create the directive', fakeAsync(() => {
     fixture.detectChanges();
     tick();
     fixture.detectChanges();
-    expect(el.query(By.css('#loading'))).not.toBeNull();
-    expect(el.query(By.css('#data'))).toBeNull();
+    expect(getTextContent()).toEqual('test');
+  }));
+
+  it('should display the loading template while data is being loaded', fakeAsync(() => {
+    component.loadFn = () => of('test').pipe(delay(1000));
+
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('loading');
+
+    tick(1000);
+    fixture.detectChanges();
+
+    expect(getTextContent()).toEqual('test');
+  }));
+
+  it('should display the error template when an error occurs', fakeAsync(() => {
+    component.loadFn = () => throwError(() => new Error('An error occurred'));
+
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+
+    expect(getTextContent()).toEqual('An error occurred');
+  }));
+
+  it('should retry loading when retry is called', fakeAsync(() => {
+    let counter = 0;
+    component.loadFn = () => {
+      counter++;
+      if (counter === 1) {
+        return throwError(() => new Error('An error occurred'));
+      } else {
+        return of('test');
+      }
+    };
+
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+
+    expect(getTextContent()).toEqual('An error occurred');
+
+    // Simulate a click on the retry button
+    const button = fixture.debugElement.query(
+      By.css('button#retry')
+    ).nativeElement;
+    button.click();
+
+    tick();
+    fixture.detectChanges();
+
+    expect(getTextContent()).toEqual('test');
+  }));
+
+  it('should debounce the loading function', fakeAsync(() => {
+    let counter = 0;
+    component.loadFn = () => {
+      counter++;
+      return timer(1000).pipe(map(() => 'test' + counter));
+    };
+    component.debounceTime = 2000;
+
+    fixture.detectChanges();
+
+    const loadButton = fixture.nativeElement.querySelector('#load');
+    loadButton.click();
+    tick(1500);
+    loadButton.click();
+    tick(3000); // allow time for the debounceTime and the timer in loadFn
+    fixture.detectChanges();
+
+    expect(getTextContent()).toEqual('test1');
+    discardPeriodicTasks(); // discard any remaining timers
+  }));
+
+  it('should display the stale data while reloading', fakeAsync(() => {
+    let counter = 0;
+    component.loadFn = () => {
+      counter++;
+      return timer(1000).pipe(map(() => 'test' + counter));
+    };
+    component.staleData = true;
+
+    fixture.detectChanges();
+
+    const loadButton = fixture.nativeElement.querySelector('#load');
+    loadButton.click();
+    tick(1500); // allow time for the first load to complete
+    fixture.detectChanges();
+
+    expect(getTextContent()).toEqual('test1');
+
+    loadButton.click();
+    tick(500); // only partial wait to simulate reloading
+    fixture.detectChanges();
+
+    expect(getTextContent()).toEqual('test1(reloading)');
+
+    tick(1000); // allow time for the second load to complete
+    fixture.detectChanges();
+
+    expect(getTextContent()).toEqual('test2');
+  }));
+
+  it('should trigger a reload when args change', fakeAsync(() => {
+    component.loadFn = (args: any) => of(args);
+    component.args = 'test1';
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('test1');
+
+    component.args = 'test2';
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+
+    expect(getTextContent()).toEqual('test2');
+  }));
+
+  it('should handle multiple emissions', fakeAsync(() => {
+    component.loadFn = () =>
+      interval(1000).pipe(map((count) => 'test' + count));
+
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('loading');
+
+    tick(1000);
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('test0');
+
+    tick(1000);
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('test1');
+
+    tick(1000);
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('test2');
+
+    // remember to discard any remaining timers
     discardPeriodicTasks();
   }));
 
-  it('should show stale data when configured so', fakeAsync(() => {
-    createMicroSyntaxComponent();
-    component.showStaleData = true;
-    fixture.detectChanges();
-    tick(1000);
-    component.args = 'bar';
+  it('should set data when setData is called', fakeAsync(() => {
     fixture.detectChanges();
     tick();
     fixture.detectChanges();
-    expect(el.query(By.css('#loading'))).toBeNull();
-    expect(el.query(By.css('#data'))).not.toBeNull();
-    discardPeriodicTasks();
+    component.loader.setData('foo');
+    fixture.detectChanges();
+
+    expect(getTextContent()).toEqual('foo');
   }));
 
-  it('should debounce', fakeAsync(() => {
-    createMicroSyntaxComponent();
-    component.debounceTime = 1000;
+  it('should display error when setError is called', fakeAsync(() => {
     fixture.detectChanges();
-    tick(500);
+    tick();
     fixture.detectChanges();
-    expect(el.query(By.css('#loading'))).not.toBeNull();
-    expect(el.query(By.css('#data'))).toBeNull();
-    const getDebounceText = () =>
-      el
-        .query(By.css('#debouncing-before-initial-load'))
-        .nativeElement.textContent.trim();
-    expect(getDebounceText()).toEqual('Debouncing');
-    tick(501);
+    component.loader.setError(new Error('test error'));
     fixture.detectChanges();
-    expect(getDebounceText()).toEqual('Not debouncing');
-    discardPeriodicTasks();
+
+    expect(getTextContent()).toEqual('test error');
   }));
 
-  it('should update the loading state with the provided data using setData()', fakeAsync(() => {
-    createNormalSyntaxComponent();
-    normalSyntaxFixture.detectChanges();
-    tick();
-    const testData = 'Test Data';
-    normalSyntaxComponent.loader!.setData(testData);
-    tick();
-    normalSyntaxFixture.detectChanges();
-
-    // Verify that the loaded data is rendered correctly
+  it('should have ngTemplateContextGuard method that always returns true', () => {
+    expect(NgxLoadWithDirective.ngTemplateContextGuard).toBeDefined();
     expect(
-      normalSyntaxEl.query(By.css('#data')).nativeElement.textContent.trim()
-    ).toEqual(testData);
+      NgxLoadWithDirective.ngTemplateContextGuard(null as any, null)
+    ).toEqual(true);
+  });
 
-    // Verify that the loading template and error template are not rendered
-    expect(normalSyntaxEl.query(By.css('#loading'))).toBeNull();
-    expect(normalSyntaxEl.query(By.css('#error'))).toBeNull();
+  it('should call loadStart and loadFinish event emitters', fakeAsync(() => {
+    fixture.detectChanges();
+    spyOn(component.loader.loadStart, 'emit');
+    spyOn(component.loader.loadFinish, 'emit');
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(component.loader.loadStart.emit).toHaveBeenCalled();
+    expect(component.loader.loadFinish.emit).toHaveBeenCalled();
   }));
 
-  it('should update the loading state with the provided error using setError()', fakeAsync(() => {
-    createNormalSyntaxComponent();
-    normalSyntaxFixture.detectChanges();
+  it('should call loadError when an error occurs', fakeAsync(() => {
+    component.loadFn = () => throwError(() => new Error('An error occurred'));
+    fixture.detectChanges();
+    spyOn(component.loader.loadError, 'emit');
+    fixture.detectChanges();
     tick();
-    const testError = new Error('Test Error');
-    normalSyntaxComponent.loader!.setError(testError);
+    fixture.detectChanges();
+    expect(component.loader.loadError.emit).toHaveBeenCalled();
+  }));
+
+  it('should call loadingStateChange when loading state changes', fakeAsync(() => {
+    fixture.detectChanges();
+    const spy = spyOn(component.loader.loadingStateChange, 'emit');
+    component.loader.load();
+    fixture.detectChanges();
     tick();
-    normalSyntaxFixture.detectChanges();
-
-    // Verify that the loaded error is rendered correctly
-    expect(
-      normalSyntaxEl.query(By.css('#error')).nativeElement.textContent.trim()
-    ).toEqual(testError.message);
-
-    // Verify that the loading template and error template are not rendered
-    expect(normalSyntaxEl.query(By.css('#loading'))).toBeNull();
-    expect(normalSyntaxEl.query(By.css('#data'))).toBeNull();
+    fixture.detectChanges();
+    expect(spy).toHaveBeenCalled();
   }));
 });
