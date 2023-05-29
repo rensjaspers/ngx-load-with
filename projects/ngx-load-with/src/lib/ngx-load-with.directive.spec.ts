@@ -232,7 +232,7 @@ describe('NgxLoadWithDirective', () => {
     ).toEqual(true);
   });
 
-  it('should call event emitters', fakeAsync(() => {
+  it('should call loadStart and loadFinish event emitters', fakeAsync(() => {
     fixture.detectChanges();
     spyOn(component.loader.loadStart, 'emit');
     spyOn(component.loader.loadFinish, 'emit');
