@@ -231,4 +231,35 @@ describe('NgxLoadWithDirective', () => {
       NgxLoadWithDirective.ngTemplateContextGuard(null as any, null)
     ).toEqual(true);
   });
+
+  it('should call event emitters', fakeAsync(() => {
+    fixture.detectChanges();
+    spyOn(component.loader.loadStart, 'emit');
+    spyOn(component.loader.loadFinish, 'emit');
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(component.loader.loadStart.emit).toHaveBeenCalled();
+    expect(component.loader.loadFinish.emit).toHaveBeenCalled();
+  }));
+
+  it('should call loadError when an error occurs', fakeAsync(() => {
+    component.loadFn = () => throwError(() => new Error('An error occurred'));
+    fixture.detectChanges();
+    spyOn(component.loader.loadError, 'emit');
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(component.loader.loadError.emit).toHaveBeenCalled();
+  }));
+
+  it('should call loadingStateChange when loading state changes', fakeAsync(() => {
+    fixture.detectChanges();
+    const spy = spyOn(component.loader.loadingStateChange, 'emit');
+    component.loader.load();
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(spy).toHaveBeenCalled();
+  }));
 });

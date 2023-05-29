@@ -222,6 +222,7 @@ export class NgxLoadWithDirective<T = unknown>
   }
 
   private handleLoadingPhase(state: LoadingState<T>) {
+    this.loadingStateChange.emit(state);
     const phase = this.getLoadingPhase(state);
     this.loadingPhaseHandlers[phase](state);
     this.changeDetectorRef.markForCheck();
