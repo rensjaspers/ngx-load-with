@@ -61,14 +61,7 @@ The `ngxLoadWith` directive has the following inputs:
 The `LoadedTemplateContext` interface has the following properties:
 
 - `$implicit`: The data emitted by the observable.
-- `reloading`: A boolean indicating whether the observable is currently loading.
-- `debouncing`: A boolean indicating whether the reload trigger is currently debouncing.
-
-### LoadingTemplateContext interface
-
-The `LoadingTemplateContext` interface has the following properties:
-
-- `debouncing`: A boolean indicating whether the reload trigger is currently debouncing.
+- `loading`: A boolean indicating whether the observable is currently loading.
 
 ### ErrorTemplateContext interface
 
