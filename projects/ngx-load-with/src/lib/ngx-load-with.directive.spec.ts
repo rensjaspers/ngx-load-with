@@ -6,7 +6,7 @@ import {
   fakeAsync,
   tick,
 } from '@angular/core/testing';
-import { delay, map, of, throwError, timer } from 'rxjs';
+import { delay, interval, map, of, throwError, timer } from 'rxjs';
 import {
   ErrorTemplateContext,
   NgxLoadWithDirective,
@@ -19,6 +19,7 @@ import { By } from '@angular/platform-browser';
     <ng-template
       #loader="ngxLoadWith"
       [ngxLoadWith]="loadFn"
+      [ngxLoadWithArgs]="args"
       [ngxLoadWithLoadingTemplate]="loading"
       [ngxLoadWithErrorTemplate]="error"
       [ngxLoadWithDebounceTime]="debounceTime"
@@ -38,13 +39,15 @@ class TestComponent {
   @ViewChild('loader') loader!: NgxLoadWithDirective;
   debounceTime?: number;
   staleData?: boolean;
+  args?: unknown;
 
-  loadFn = () => of('test');
+  loadFn = (_args: any) => of('test' as any);
 }
 
 describe('NgxLoadWithDirective', () => {
   let component: TestComponent;
   let fixture: ComponentFixture<TestComponent>;
+  const getTextContent = () => fixture.nativeElement.textContent.trim();
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -59,19 +62,19 @@ describe('NgxLoadWithDirective', () => {
     fixture.detectChanges();
     tick();
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent.trim()).toEqual('test');
+    expect(getTextContent()).toEqual('test');
   }));
 
   it('should display the loading template while data is being loaded', fakeAsync(() => {
     component.loadFn = () => of('test').pipe(delay(1000));
 
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent.trim()).toEqual('loading');
+    expect(getTextContent()).toEqual('loading');
 
     tick(1000);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent.trim()).toEqual('test');
+    expect(getTextContent()).toEqual('test');
   }));
 
   it('should display the error template when an error occurs', fakeAsync(() => {
@@ -81,9 +84,7 @@ describe('NgxLoadWithDirective', () => {
     tick();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent.trim()).toEqual(
-      'An error occurred'
-    );
+    expect(getTextContent()).toEqual('An error occurred');
   }));
 
   it('should retry loading when retry is called', fakeAsync(() => {
@@ -101,9 +102,7 @@ describe('NgxLoadWithDirective', () => {
     tick();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent.trim()).toEqual(
-      'An error occurred'
-    );
+    expect(getTextContent()).toEqual('An error occurred');
 
     // Simulate a click on the retry button
     const button = fixture.debugElement.query(
@@ -114,7 +113,7 @@ describe('NgxLoadWithDirective', () => {
     tick();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent.trim()).toEqual('test');
+    expect(getTextContent()).toEqual('test');
   }));
 
   it('should debounce the loading function', fakeAsync(() => {
@@ -134,7 +133,7 @@ describe('NgxLoadWithDirective', () => {
     tick(3000); // allow time for the debounceTime and the timer in loadFn
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent.trim()).toEqual('test1');
+    expect(getTextContent()).toEqual('test1');
     discardPeriodicTasks(); // discard any remaining timers
   }));
 
@@ -153,19 +152,56 @@ describe('NgxLoadWithDirective', () => {
     tick(1500); // allow time for the first load to complete
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent.trim()).toEqual('test1');
+    expect(getTextContent()).toEqual('test1');
 
     loadButton.click();
     tick(500); // only partial wait to simulate reloading
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent.trim()).toEqual(
-      'test1(reloading)'
-    );
+    expect(getTextContent()).toEqual('test1(reloading)');
 
     tick(1000); // allow time for the second load to complete
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent.trim()).toEqual('test2');
+    expect(getTextContent()).toEqual('test2');
+  }));
+
+  it('should trigger a reload when args change', fakeAsync(() => {
+    component.loadFn = (args: any) => of(args);
+    component.args = 'test1';
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('test1');
+
+    component.args = 'test2';
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+
+    expect(getTextContent()).toEqual('test2');
+  }));
+
+  it('should handle multiple emissions', fakeAsync(() => {
+    component.loadFn = () =>
+      interval(1000).pipe(map((count) => 'test' + count));
+
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('loading');
+
+    tick(1000);
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('test0');
+
+    tick(1000);
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('test1');
+
+    tick(1000);
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('test2');
+
+    // remember to discard any remaining timers
+    discardPeriodicTasks();
   }));
 });
