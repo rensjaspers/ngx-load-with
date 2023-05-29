@@ -239,7 +239,7 @@ export class NgxLoadWithDirective<T = unknown>
 
   private loadData(): Observable<
     | { loading: boolean; loaded: boolean; data: T }
-    | { loading: boolean; error: any }
+    | { loading: boolean; error: Error }
   > {
     return this.loadFn(this.args).pipe(
       tap((data) => {
@@ -255,8 +255,8 @@ export class NgxLoadWithDirective<T = unknown>
   }
 
   private catchDataLoadingError(
-    error: any
-  ): Observable<{ loading: boolean; error: any }> {
+    error: Error
+  ): Observable<{ loading: boolean; error: Error }> {
     return of({ loading: false, error }).pipe(
       tap(() => {
         this.loadError.emit(error);
