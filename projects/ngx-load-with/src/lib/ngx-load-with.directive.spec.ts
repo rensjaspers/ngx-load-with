@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { Component, ViewChild } from '@angular/core';
 import {
   ComponentFixture,
@@ -39,6 +40,7 @@ class TestComponent {
   staleData?: boolean;
   args?: unknown;
 
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any,@typescript-eslint/no-unused-vars
   loadFn = (_args: any) => of('test' as any);
 }
 
