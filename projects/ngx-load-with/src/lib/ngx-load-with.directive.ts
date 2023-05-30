@@ -130,31 +130,38 @@ export class NgxLoadWithDirective<T = unknown>
 
   private loadedViewRef?: EmbeddedViewRef<LoadedTemplateContext<T>>;
 
-  private readonly loadTrigger = new Subject<void>();
-  private readonly cancelTrigger = new Subject<void>();
-  private readonly destroyed = new Subject<void>();
-  private readonly stateOverride = new Subject<Partial<LoadingState<T>>>();
-  private readonly stop$ = merge(this.cancelTrigger, this.stateOverride);
+  private readonly loadRequestTrigger = new Subject<void>();
+  private readonly loadCancelTrigger = new Subject<void>();
+  private readonly directiveDestroyed = new Subject<void>();
+  private readonly loadingStateOverride = new Subject<
+    Partial<LoadingState<T>>
+  >();
+  private readonly stop$ = merge(
+    this.loadCancelTrigger,
+    this.loadingStateOverride
+  );
 
-  private readonly initialState: LoadingState<T> = {
+  private readonly initialLoadingState: LoadingState<T> = {
     loading: false,
     loaded: false,
   };
 
   private readonly loadingPhaseHandlers: loadingPhaseHandlers<T> = {
-    loading: () => this.onLoading(),
-    loaded: (state) => this.onLoaded(state),
-    error: (state) => this.onError(state),
+    loading: () => this.handleLoadingState(),
+    loaded: (state) => this.handleLoadedState(state),
+    error: (state) => this.handleErrorState(state),
   };
 
   private readonly loadingState$: Observable<LoadingState<T>> = concat(
-    of(this.initialState),
+    of(this.initialLoadingState),
     merge(
-      this.stateOverride,
+      this.loadingStateOverride,
       this.getBeforeResultStateUpdates(),
       this.getAfterResultStateUpdates()
     )
-  ).pipe(scan((state, update) => ({ ...state, ...update }), this.initialState));
+  ).pipe(
+    scan((state, update) => ({ ...state, ...update }), this.initialLoadingState)
+  );
 
   constructor(
     private templateRef: TemplateRef<LoadedTemplateContext<T>>,
@@ -163,7 +170,7 @@ export class NgxLoadWithDirective<T = unknown>
   ) {}
 
   ngOnInit(): void {
-    this.trackAndHandleLoadingState();
+    this.monitorAndHandleLoadingState();
     this.load();
   }
 
@@ -172,7 +179,7 @@ export class NgxLoadWithDirective<T = unknown>
   }
 
   ngOnDestroy(): void {
-    this.destroyed.next();
+    this.directiveDestroyed.next();
   }
 
   /**
@@ -180,21 +187,21 @@ export class NgxLoadWithDirective<T = unknown>
    */
   load(): void {
     this.cancel();
-    this.loadTrigger.next();
+    this.loadRequestTrigger.next();
   }
 
   /**
    * Cancels any pending load requests.
    */
   cancel(): void {
-    this.cancelTrigger.next();
+    this.loadCancelTrigger.next();
   }
 
   /**
    * Updates the loading state as if the passed data were loaded through the `loadWith` function.
    */
   setData(data: T): void {
-    this.stateOverride.next({
+    this.loadingStateOverride.next({
       loaded: true,
       loading: false,
       data,
@@ -206,16 +213,16 @@ export class NgxLoadWithDirective<T = unknown>
    * Updates the loading state as if the passed error were thrown by `loadWith` function.
    */
   setError(error: Error): void {
-    this.stateOverride.next({ error });
+    this.loadingStateOverride.next({ error });
   }
 
-  private trackAndHandleLoadingState() {
+  private monitorAndHandleLoadingState() {
     this.loadingState$
       .pipe(
         tap((state) => {
           this.handleLoadingPhase(state);
         }),
-        takeUntil(this.destroyed)
+        takeUntil(this.directiveDestroyed)
       )
       .subscribe();
   }
@@ -228,16 +235,16 @@ export class NgxLoadWithDirective<T = unknown>
   }
 
   private getAfterResultStateUpdates() {
-    return this.loadTrigger.pipe(
+    return this.loadRequestTrigger.pipe(
       debounce(() => this.getDebounceFinished()),
       tap(() => {
         this.loadStart.emit();
       }),
-      switchMap(() => this.loadData())
+      switchMap(() => this.executeLoadFnAndHandleResult())
     );
   }
 
-  private loadData(): Observable<
+  private executeLoadFnAndHandleResult(): Observable<
     | { loading: boolean; loaded: boolean; data: T }
     | { loading: boolean; error: Error }
   > {
@@ -246,7 +253,7 @@ export class NgxLoadWithDirective<T = unknown>
         this.loadSuccess.emit(data);
       }),
       map((data) => ({ loading: false, loaded: true, data })),
-      catchError((error) => this.catchDataLoadingError(error)),
+      catchError((error) => this.handleDataLoadingError(error)),
       finalize(() => {
         this.loadFinish.emit();
       }),
@@ -254,7 +261,7 @@ export class NgxLoadWithDirective<T = unknown>
     );
   }
 
-  private catchDataLoadingError(
+  private handleDataLoadingError(
     error: Error
   ): Observable<{ loading: boolean; error: Error }> {
     return of({ loading: false, error }).pipe(
@@ -269,7 +276,9 @@ export class NgxLoadWithDirective<T = unknown>
   }
 
   private getBeforeResultStateUpdates() {
-    return this.loadTrigger.pipe(map(() => ({ loading: true, error: null })));
+    return this.loadRequestTrigger.pipe(
+      map(() => ({ loading: true, error: null }))
+    );
   }
 
   private getLoadingPhase(state: LoadingState<T>): LoadingPhase {
@@ -282,7 +291,7 @@ export class NgxLoadWithDirective<T = unknown>
     return 'loading';
   }
 
-  private onError(state: LoadingState<T>): void {
+  private handleErrorState(state: LoadingState<T>): void {
     this.clearViewContainer();
     if (this.errorTemplate) {
       this.viewContainer.createEmbeddedView(this.errorTemplate, {
@@ -292,14 +301,14 @@ export class NgxLoadWithDirective<T = unknown>
     }
   }
 
-  private onLoading(): void {
+  private handleLoadingState(): void {
     this.clearViewContainer();
     if (this.loadingTemplate) {
       this.viewContainer.createEmbeddedView(this.loadingTemplate);
     }
   }
 
-  private onLoaded(state: LoadingState<T>): void {
+  private handleLoadedState(state: LoadingState<T>): void {
     const data = state.data as T;
     const loading = state.loading;
     if (this.loadedViewRef) {
