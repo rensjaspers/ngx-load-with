@@ -9,7 +9,16 @@ import {
   tick,
 } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { delay, interval, map, of, throwError, timer } from 'rxjs';
+import {
+  Observable,
+  Subscription,
+  delay,
+  interval,
+  map,
+  of,
+  throwError,
+  timer,
+} from 'rxjs';
 import { NgxLoadWithDirective } from './ngx-load-with.directive';
 
 @Component({
@@ -268,45 +277,70 @@ describe('NgxLoadWithDirective', () => {
     discardPeriodicTasks();
   }));
 
-  describe('misc', () => {
-    it('should have ngTemplateContextGuard method that always returns true', () => {
-      expect(NgxLoadWithDirective.ngTemplateContextGuard).toBeDefined();
-      expect(
-        NgxLoadWithDirective.ngTemplateContextGuard(null as any, null)
-      ).toEqual(true);
-    });
+  it('should clean up when the directive is destroyed', fakeAsync(() => {
+    let cleanedUp = false;
+
+    component.loadFn = () =>
+      new Observable((observer) => {
+        // Start emitting values
+        const intervalId = setInterval(() => observer.next('test'), 1000);
+
+        // Mark cleanedUp as true when the Observable is unsubscribed
+        return new Subscription(() => {
+          clearInterval(intervalId);
+          cleanedUp = true;
+        });
+      });
+
+    fixture.detectChanges();
+    tick(1000); // allow time for the first load to complete
+
+    expect(cleanedUp).toBe(false);
+
+    fixture.destroy(); // this should trigger ngOnDestroy in the directive
+
+    tick(1000); // allow time for the second load to attempt start
+
+    expect(cleanedUp).toBe(true);
+
+    discardPeriodicTasks();
+  }));
+
+  it('should have ngTemplateContextGuard method that always returns true', () => {
+    expect(NgxLoadWithDirective.ngTemplateContextGuard).toBeDefined();
+    expect(
+      NgxLoadWithDirective.ngTemplateContextGuard(null as any, null)
+    ).toEqual(true);
   });
 
-  describe('event emitters', () => {
-    it('should call loadStart and loadFinish event emitters', fakeAsync(() => {
-      fixture.detectChanges();
-      spyOn(component.loader.loadStart, 'emit');
-      spyOn(component.loader.loadFinish, 'emit');
-      fixture.detectChanges();
-      tick();
-      fixture.detectChanges();
-      expect(component.loader.loadStart.emit).toHaveBeenCalled();
-      expect(component.loader.loadFinish.emit).toHaveBeenCalled();
-    }));
+  it('should call loadStart and loadFinish event emitters', fakeAsync(() => {
+    fixture.detectChanges();
+    spyOn(component.loader.loadStart, 'emit');
+    spyOn(component.loader.loadFinish, 'emit');
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(component.loader.loadStart.emit).toHaveBeenCalled();
+    expect(component.loader.loadFinish.emit).toHaveBeenCalled();
+  }));
 
-    it('should call loadError when an error occurs', fakeAsync(() => {
-      component.loadFn = () => throwError(() => new Error('An error occurred'));
-      fixture.detectChanges();
-      spyOn(component.loader.loadError, 'emit');
-      fixture.detectChanges();
-      tick();
-      fixture.detectChanges();
-      expect(component.loader.loadError.emit).toHaveBeenCalled();
-    }));
+  it('should call loadError when an error occurs', fakeAsync(() => {
+    component.loadFn = () => throwError(() => new Error('An error occurred'));
+    fixture.detectChanges();
+    spyOn(component.loader.loadError, 'emit');
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(component.loader.loadError.emit).toHaveBeenCalled();
+  }));
 
-    it('should call loadingStateChange when loading state changes', fakeAsync(() => {
-      fixture.detectChanges();
-      const spy = spyOn(component.loader.loadingStateChange, 'emit');
-      component.loader.load();
-      fixture.detectChanges();
-      tick();
-      fixture.detectChanges();
-      expect(spy).toHaveBeenCalled();
-    }));
-  });
+  it('should call loadingStateChange when loading state changes', fakeAsync(() => {
+    fixture.detectChanges();
+    const spy = spyOn(component.loader.loadingStateChange, 'emit');
+    component.loader.load();
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(spy).toHaveBeenCalled();
+  }));
 });
