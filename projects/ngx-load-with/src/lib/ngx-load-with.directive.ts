@@ -194,7 +194,6 @@ export class NgxLoadWithDirective<T = unknown>
    * Updates the loading state as if the passed data were loaded through the `loadWith` function.
    */
   setData(data: T): void {
-    this.cancel();
     this.stateOverride.next({
       loaded: true,
       loading: false,

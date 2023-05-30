@@ -225,41 +225,88 @@ describe('NgxLoadWithDirective', () => {
     expect(getTextContent()).toEqual('test error');
   }));
 
-  it('should have ngTemplateContextGuard method that always returns true', () => {
-    expect(NgxLoadWithDirective.ngTemplateContextGuard).toBeDefined();
-    expect(
-      NgxLoadWithDirective.ngTemplateContextGuard(null as any, null)
-    ).toEqual(true);
+  it('it should stop loadFn emissions when setData or setError is called', fakeAsync(() => {
+    let counter = 0;
+    component.loadFn = () => {
+      counter++;
+      return timer(1000).pipe(map(() => 'test' + counter));
+    };
+
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+
+    expect(getTextContent()).toEqual('loading');
+
+    tick(1000);
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('test1');
+
+    component.loader.setData('foo');
+    fixture.detectChanges();
+
+    tick(1000);
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('foo');
+
+    tick(1000);
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('foo');
+
+    component.loader.setError(new Error('test error'));
+    fixture.detectChanges();
+
+    tick(1000);
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('test error');
+
+    tick(1000);
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('test error');
+
+    // remember to discard any remaining timers
+    discardPeriodicTasks();
+  }));
+
+  describe('misc', () => {
+    it('should have ngTemplateContextGuard method that always returns true', () => {
+      expect(NgxLoadWithDirective.ngTemplateContextGuard).toBeDefined();
+      expect(
+        NgxLoadWithDirective.ngTemplateContextGuard(null as any, null)
+      ).toEqual(true);
+    });
   });
 
-  it('should call loadStart and loadFinish event emitters', fakeAsync(() => {
-    fixture.detectChanges();
-    spyOn(component.loader.loadStart, 'emit');
-    spyOn(component.loader.loadFinish, 'emit');
-    fixture.detectChanges();
-    tick();
-    fixture.detectChanges();
-    expect(component.loader.loadStart.emit).toHaveBeenCalled();
-    expect(component.loader.loadFinish.emit).toHaveBeenCalled();
-  }));
+  describe('event emitters', () => {
+    it('should call loadStart and loadFinish event emitters', fakeAsync(() => {
+      fixture.detectChanges();
+      spyOn(component.loader.loadStart, 'emit');
+      spyOn(component.loader.loadFinish, 'emit');
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+      expect(component.loader.loadStart.emit).toHaveBeenCalled();
+      expect(component.loader.loadFinish.emit).toHaveBeenCalled();
+    }));
 
-  it('should call loadError when an error occurs', fakeAsync(() => {
-    component.loadFn = () => throwError(() => new Error('An error occurred'));
-    fixture.detectChanges();
-    spyOn(component.loader.loadError, 'emit');
-    fixture.detectChanges();
-    tick();
-    fixture.detectChanges();
-    expect(component.loader.loadError.emit).toHaveBeenCalled();
-  }));
+    it('should call loadError when an error occurs', fakeAsync(() => {
+      component.loadFn = () => throwError(() => new Error('An error occurred'));
+      fixture.detectChanges();
+      spyOn(component.loader.loadError, 'emit');
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+      expect(component.loader.loadError.emit).toHaveBeenCalled();
+    }));
 
-  it('should call loadingStateChange when loading state changes', fakeAsync(() => {
-    fixture.detectChanges();
-    const spy = spyOn(component.loader.loadingStateChange, 'emit');
-    component.loader.load();
-    fixture.detectChanges();
-    tick();
-    fixture.detectChanges();
-    expect(spy).toHaveBeenCalled();
-  }));
+    it('should call loadingStateChange when loading state changes', fakeAsync(() => {
+      fixture.detectChanges();
+      const spy = spyOn(component.loader.loadingStateChange, 'emit');
+      component.loader.load();
+      fixture.detectChanges();
+      tick();
+      fixture.detectChanges();
+      expect(spy).toHaveBeenCalled();
+    }));
+  });
 });
