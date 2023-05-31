@@ -31,7 +31,7 @@ export class MyModule {}
 
 ## Usage
 
-### Basic Usage
+### Basic usage
 
 Load data from an Observable and display it in your template:
 
@@ -50,7 +50,7 @@ export class MyComponent {
 }
 ```
 
-### Loading and Error Templates
+### Loading and error templates
 
 Display a loading message while data is being loaded, and an error message if an error occurs:
 
@@ -62,7 +62,7 @@ Display a loading message while data is being loaded, and an error message if an
 <ng-template #error let-error>{{error.message}}</ng-template>
 ```
 
-### Fetching Data Using Route Parameters
+### Fetching data using route parameters
 
 Load data based on a parameter from the route:
 
@@ -81,7 +81,7 @@ export class MyComponent {
 }
 ```
 
-### Searching Data
+### Searching data
 
 Fetch data based on user input:
 
@@ -99,7 +99,7 @@ export class MyComponent {
 }
 ```
 
-### Reloading Data
+### Reloading data
 
 Reload data when a button is clicked:
 
