@@ -111,7 +111,7 @@ Reload data when a button is clicked:
 </ng-template>
 ```
 
-> Note: if you want to use the `ngxLoadWith.load` method in your template, you cannot use the `*ngxLoadWith` microsyntax.
+> Note: if you want to use the `NgxLoadWithDirective.load` method in your template, you cannot use the `*ngxLoadWith` microsyntax.
 
 ### Reloading while continuing to show stale data
 
@@ -126,7 +126,7 @@ Reload data when a button is clicked, but display stale data while the new data 
 </ng-template>
 ```
 
-> Note: if you want to use the `ngxLoadWith.load` method in your template, you cannot use the `*ngxLoadWith` microsyntax.
+> Note: if you want to use the `NgxLoadWithDirective.load` method in your template, you cannot use the `*ngxLoadWith` microsyntax.
 
 ## API
 
