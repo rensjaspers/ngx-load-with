@@ -73,7 +73,7 @@ Load data based on a parameter from the route:
 ```typescript
 @Component({...})
 export class MyComponent {
-  routeParams$ = inject(ActivatedRoute).params
+  routeParams$ = inject(ActivatedRoute).params;
 
   getTodo = ({id}) => this.http.get<Todo>('api/todos/' + id);
 
