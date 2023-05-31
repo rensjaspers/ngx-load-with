@@ -1,6 +1,6 @@
 {
   "name": "ngx-load-with",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "peerDependencies": {
     "@angular/common": ">=15.2.0",
     "@angular/core": ">=15.2.0",
