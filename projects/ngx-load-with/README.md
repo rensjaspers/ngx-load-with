@@ -1,12 +1,11 @@
-# ngx-load-with
+# NgxLoadWithDirective
 
-The `ngx-load-with` directive is an Angular directive that simplifies the process of displaying loading and error states for asynchronous operations in your Angular application.
+NgxLoadWithDirective is a powerful and versatile Angular directive that handles data loading from a function returning an Observable. It provides a consistent way to manage loading states and display relevant UIs for different loading stages.
 
 [![Build status](https://img.shields.io/github/actions/workflow/status/rensjaspers/ngx-load-with/test.yml?branch=main)](https://github.com/rensjaspers/ngx-load-with/actions/workflows/main.yml)
 [![NPM version](https://img.shields.io/npm/v/ngx-load-with.svg)](https://www.npmjs.com/package/ngx-load-with)
 [![NPM downloads](https://img.shields.io/npm/dm/ngx-load-with.svg)](https://www.npmjs.com/package/ngx-load-with)
 [![MIT license](https://img.shields.io/github/license/rensjaspers/ngx-load-with)](https://github.com/rensjaspers/ngx-load-with/blob/main/LICENSE)
-[![Minzipped size](https://img.shields.io/bundlephobia/minzip/ngx-load-with)](https://bundlephobia.com/result?p=ngx-load-with)
 [![CodeFactor](https://img.shields.io/codefactor/grade/github/rensjaspers/ngx-load-with)](https://www.codefactor.io/repository/github/rensjaspers/ngx-load-with)
 [![Codecov](https://img.shields.io/codecov/c/github/rensjaspers/ngx-load-with)](https://app.codecov.io/gh/rensjaspers/ngx-load-with)
 
@@ -17,8 +16,6 @@ To install `ngx-load-with`, run the following command:
 ```bash
 npm install ngx-load-with
 ```
-
-## Usage
 
 To use `ngx-load-with`, import the `NgxLoadWithModule` module in your Angular module:
 
@@ -32,43 +29,163 @@ import { NgxLoadWithModule } from "ngx-load-with";
 export class MyModule {}
 ```
 
-Then, use the `ngxLoadWith` directive in your component's template:
+## Usage
+
+### Basic Usage
+
+Load data from an Observable and display it in your template:
 
 ```html
-<div *ngxLoadWith="myLoadFn as data; loadingTemplate: loading; errorTemplate: error">{{ data }}</div>
-
-<ng-template #loading>Loading...</ng-template>
-<ng-template #error let-error>{{ error.message }}</ng-template>
+<div *ngxLoadWith="getTodos as todos">
+  <div *ngFor="let todo of todos">{{todo.title}}</div>
+</div>
 ```
 
-In the example above, `myLoadFn` is a function that returns an observable that emits the data you want to display. The `loadingTemplate` and `errorTemplate` are optional templates that will be displayed while the observable is loading or if an error occurs.
+```typescript
+@Component({...})
+export class MyComponent {
+  getTodos = () => this.http.get<Todo[]>('api/todos');
+
+  private http = inject(HttpClient);
+}
+```
+
+### Loading and Error Templates
+
+Display a loading message while data is being loaded, and an error message if an error occurs:
+
+```html
+<div *ngxLoadWith="getTodos as todos; loadingTemplate: loading; errorTemplate: error">
+  <div *ngFor="let todo of todos">{{todo.title}}</div>
+</div>
+<ng-template #loading>Loading...</ng-template>
+<ng-template #error let-error>{{error.message}}</ng-template>
+```
+
+### Fetching Data Using Route Parameters
+
+Load data based on a parameter from the route:
+
+```html
+<div *ngxLoadWith="getTodo as todo; args: routeParams$ | async">{{todo.title}}</div>
+```
+
+```typescript
+@Component({...})
+export class MyComponent {
+  routeParams$ = inject(ActivatedRoute).params
+
+  getTodo = ({id}) => this.http.get<Todo>('api/todos/' + id);
+
+  private http = inject(HttpClient);
+}
+```
+
+### Searching Data
+
+Fetch data based on user input:
+
+```html
+<input ngModel #searchbox />
+<div *ngxLoadWith="findTodos as todos; args: searchbox.value; debounceTime: 300">{{todo.title}}</div>
+```
+
+```typescript
+@Component({...})
+export class MyComponent {
+  findTodos = (keywords: string) => this.http.get<Todo[]>('api/todos', { params: { q: keywords} });
+
+  private http = inject(HttpClient);
+}
+```
+
+### Reloading Data
+
+Reload data when a button is clicked:
+
+```html
+<button (click)="todosLoader.load()">Reload</button>
+
+<ng-template #todosLoader="ngxLoadWith" [ngxLoadWith]="getTodos as todos">
+  <div *ngFor="let todo of todos">{{todo.title}}</div>
+</ng-template>
+```
+
+> Note: if you want to use the `ngxLoadWith.load` method in your template, you cannot use the `*ngxLoadWith` microsyntax.
+
+### Reloading while continuing to show stale data
+
+Reload data when a button is clicked, but display stale data while the new data is being loaded:
+
+```html
+<button (click)="todosLoader.load()">Reload</button>
+
+<ng-template #todosLoader="ngxLoadWith" [ngxLoadWith]="getTodos as todos; staleData: true; let loading = loading">
+  <div *ngIf="loading">Reloading...</div>
+  <div *ngFor="let todo of todos">{{todo.title}}</div>
+</ng-template>
+```
+
+> Note: if you want to use the `ngxLoadWith.load` method in your template, you cannot use the `*ngxLoadWith` microsyntax.
 
 ## API
 
-### NgxLoadWithDirective
+### Inputs
 
-The `ngxLoadWith` directive has the following inputs:
+| Name                         | Type                                | Description                                                                                                     |
+| ---------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `ngxLoadWith`                | `(args?: any) => Observable<T>`     | A function that returns an `Observable` of the data to be loaded. Changes to this function trigger a reload.    |
+| `ngxLoadWithArgs`            | `unknown`                           | An argument to be passed to the `loadFn` function. Changes to this argument will trigger a reload.              |
+| `ngxLoadWithLoadingTemplate` | `TemplateRef<unknown>`              | An optional template to be displayed while the data is being loaded.                                            |
+| `ngxLoadWithErrorTemplate`   | `TemplateRef<ErrorTemplateContext>` | An optional template to be displayed when an error occurs while loading the data.                               |
+| `ngxLoadWithDebounceTime`    | `number`                            | The amount of time in milliseconds to wait before triggering a reload when the `ngxLoadWithArgs` input changes. |
+| `ngxLoadWithStaleData`       | `boolean`                           | A boolean indicating whether to use stale data when reloading.                                                  |
 
-- `ngxLoadWith`: The function that returns the observable that emits the data you want to display.
-- `args`: The arguments to pass to the `ngxLoadWith` function.
-- `loadingTemplate`: The template to display while the observable is loading.
-- `errorTemplate`: The template to display if an error occurs.
-- `debounceTime`: The number of milliseconds to debounce the reload trigger. Defaults to `0`.
-- `staleData`: A boolean indicating whether to display stale data while the observable is loading. Defaults to `false`.
+### Outputs
 
-### LoadedTemplateContext interface
+| Name                 | Type                            | Description                                                                     |
+| -------------------- | ------------------------------- | ------------------------------------------------------------------------------- |
+| `loadStart`          | `EventEmitter<void>`            | Emits when the data loading process starts.                                     |
+| `loadSuccess`        | `EventEmitter<T>`               | Emits when the data loading process is successful.                              |
+| `loadError`          | `EventEmitter<Error>`           | Emits when an error occurs while loading the data.                              |
+| `loadFinish`         | `EventEmitter<void>`            | Emits when the data loading process finishes, regardless of success or failure. |
+| `loadingStateChange` | `EventEmitter<LoadingState<T>>` | Emits when the loading state changes.                                           |
 
-The `LoadedTemplateContext` interface has the following properties:
+### Methods
 
-- `$implicit`: The data emitted by the observable.
-- `loading`: A boolean indicating whether the observable is currently loading.
+| Name                     | Description                                                                                |
+| ------------------------ | ------------------------------------------------------------------------------------------ |
+| `load()`                 | Triggers a reload of the data. Previous load requests are cancelled.                       |
+| `cancel()`               | Cancels any pending load requests.                                                         |
+| `setData(data: T)`       | Updates the loading state as if the passed data were loaded through the `loadFn` function. |
+| `setError(error: Error)` | Updates the loading state as if the passed error were thrown by the `loadFn` function.     |
 
-### ErrorTemplateContext interface
+### Interfaces
 
-The `ErrorTemplateContext` interface has the following properties:
+```typescript
+interface LoadingState<T = unknown> {
+  loading: boolean;
+  loaded: boolean;
+  error?: Error | null;
+  data?: T;
+}
 
-- `$implicit`: The error emitted by the observable.
-- `retry`: A function that can be called to retry the observable.
+interface LoadedTemplateContext<T = unknown> {
+  $implicit: T;
+  ngxLoadWith: T;
+  loading: boolean;
+}
+
+interface ErrorTemplateContext {
+  $implicit: Error;
+  retry: () => void;
+}
+```
+
+### Notes
+
+- `NgxLoadWithDirective` can optionally take a `TemplateRef` for `ngxLoadWithLoadingTemplate` and `ngxLoadWithErrorTemplate`. In the case of `ngxLoadWithLoadingTemplate`, the template will be displayed while data is being loaded. For `ngxLoadWithErrorTemplate`, the template will be displayed when an error occurs while loading the data.
+- `ngTemplateContextGuard<T>(_dir: NgxLoadWithDirective<T>, _ctx: unknown): _ctx is LoadedTemplateContext<T>` is a static method that asserts the type of the context for the directive.
 
 ## License
 
