@@ -138,8 +138,8 @@ Reload data when a button is clicked, but display stale data while the new data 
 | `ngxLoadWithArgs`            | `unknown`                           | An argument to be passed to the `loadFn` function. Changes to this argument will trigger a reload.              |
 | `ngxLoadWithLoadingTemplate` | `TemplateRef<unknown>`              | An optional template to be displayed while the data is being loaded.                                            |
 | `ngxLoadWithErrorTemplate`   | `TemplateRef<ErrorTemplateContext>` | An optional template to be displayed when an error occurs while loading the data.                               |
-| `ngxLoadWithDebounceTime`    | `number`                            | The amount of time in milliseconds to wait before triggering a reload when the `ngxLoadWithArgs` input changes. |
-| `ngxLoadWithStaleData`       | `boolean`                           | A boolean indicating whether to use stale data when reloading.                                                  |
+| `ngxLoadWithDebounceTime`    | `number`                            | The amount of time in milliseconds to debounce the load trigger.                                                |
+| `ngxLoadWithStaleData`       | `boolean`                           | A boolean indicating whether to show stale data when reloading.                                                 |
 
 ### Outputs
 
@@ -181,11 +181,6 @@ interface ErrorTemplateContext {
   retry: () => void;
 }
 ```
-
-### Notes
-
-- `NgxLoadWithDirective` can optionally take a `TemplateRef` for `ngxLoadWithLoadingTemplate` and `ngxLoadWithErrorTemplate`. In the case of `ngxLoadWithLoadingTemplate`, the template will be displayed while data is being loaded. For `ngxLoadWithErrorTemplate`, the template will be displayed when an error occurs while loading the data.
-- `ngTemplateContextGuard<T>(_dir: NgxLoadWithDirective<T>, _ctx: unknown): _ctx is LoadedTemplateContext<T>` is a static method that asserts the type of the context for the directive.
 
 ## License
 
