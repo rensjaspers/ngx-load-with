@@ -55,9 +55,9 @@ export class MyComponent {
 Display a loading message while data is being loaded, and an error message if an error occurs:
 
 ```html
-<div *ngxLoadWith="getTodos as todos; loadingTemplate: loading; errorTemplate: error">
-  <div *ngFor="let todo of todos">{{todo.title}}</div>
-</div>
+<ul *ngxLoadWith="getTodos as todos; loadingTemplate: loading; errorTemplate: error">
+  <li *ngFor="let todo of todos">{{todo.title}}</li>
+</ul>
 <ng-template #loading>Loading...</ng-template>
 <ng-template #error let-error>{{error.message}}</ng-template>
 ```
@@ -87,7 +87,9 @@ Fetch data based on user input:
 
 ```html
 <input ngModel #searchbox />
-<div *ngxLoadWith="findTodos as todos; args: searchbox.value; debounceTime: 300">{{todo.title}}</div>
+<ul *ngxLoadWith="findTodos as todos; args: searchbox.value; debounceTime: 300">
+  <li *ngFor="let todo of todos">{{todo.title}}</li>
+</ul>
 ```
 
 ```typescript
@@ -107,7 +109,9 @@ Reload data when a button is clicked:
 <button (click)="todosLoader.load()">Reload</button>
 
 <ng-template #todosLoader="ngxLoadWith" [ngxLoadWith]="getTodos as todos">
-  <div *ngFor="let todo of todos">{{todo.title}}</div>
+  <ul>
+    <li *ngFor="let todo of todos">{{todo.title}}</li>
+  </ul>
 </ng-template>
 ```
 
@@ -122,7 +126,9 @@ Reload data when a button is clicked, but display stale data while the new data 
 
 <ng-template #todosLoader="ngxLoadWith" [ngxLoadWith]="getTodos as todos; staleData: true; let loading = loading">
   <div *ngIf="loading">Reloading...</div>
-  <div *ngFor="let todo of todos">{{todo.title}}</div>
+  <ul>
+    <li *ngFor="let todo of todos">{{todo.title}}</li>
+  </ul>
 </ng-template>
 ```
 
@@ -132,14 +138,14 @@ Reload data when a button is clicked, but display stale data while the new data 
 
 ### Inputs
 
-| Name                         | Type                                | Description                                                                                                     |
-| ---------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `ngxLoadWith`                | `(args?: any) => Observable<T>`     | A function that returns an `Observable` of the data to be loaded. Changes to this function trigger a reload.    |
-| `ngxLoadWithArgs`            | `unknown`                           | An argument to be passed to the `loadFn` function. Changes to this argument will trigger a reload.              |
-| `ngxLoadWithLoadingTemplate` | `TemplateRef<unknown>`              | An optional template to be displayed while the data is being loaded.                                            |
-| `ngxLoadWithErrorTemplate`   | `TemplateRef<ErrorTemplateContext>` | An optional template to be displayed when an error occurs while loading the data.                               |
-| `ngxLoadWithDebounceTime`    | `number`                            | The amount of time in milliseconds to debounce the load trigger.                                                |
-| `ngxLoadWithStaleData`       | `boolean`                           | A boolean indicating whether to show stale data when reloading.                                                 |
+| Name                         | Type                                | Description                                                                                                  |
+| ---------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `ngxLoadWith`                | `(args?: any) => Observable<T>`     | A function that returns an `Observable` of the data to be loaded. Changes to this function trigger a reload. |
+| `ngxLoadWithArgs`            | `unknown`                           | An argument to be passed to the `loadFn` function. Changes to this argument will trigger a reload.           |
+| `ngxLoadWithLoadingTemplate` | `TemplateRef<unknown>`              | An optional template to be displayed while the data is being loaded.                                         |
+| `ngxLoadWithErrorTemplate`   | `TemplateRef<ErrorTemplateContext>` | An optional template to be displayed when an error occurs while loading the data.                            |
+| `ngxLoadWithDebounceTime`    | `number`                            | The amount of time in milliseconds to debounce the load trigger.                                             |
+| `ngxLoadWithStaleData`       | `boolean`                           | A boolean indicating whether to show stale data when reloading.                                              |
 
 ### Outputs
 
