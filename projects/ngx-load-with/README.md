@@ -43,9 +43,9 @@ export class MyModule {}
 Load data from an Observable and display it in your template:
 
 ```html
-<div *ngxLoadWith="getTodos as todos">
-  <div *ngFor="let todo of todos">{{todo.title}}</div>
-</div>
+<ul *ngxLoadWith="getTodos as todos">
+  <li *ngFor="let todo of todos">{{todo.title}}</li>
+</ul>
 ```
 
 ```typescript
