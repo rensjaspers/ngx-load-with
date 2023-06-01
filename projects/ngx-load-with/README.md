@@ -9,6 +9,13 @@ NgxLoadWithDirective is a powerful and versatile Angular directive that handles 
 [![CodeFactor](https://img.shields.io/codefactor/grade/github/rensjaspers/ngx-load-with)](https://www.codefactor.io/repository/github/rensjaspers/ngx-load-with)
 [![Codecov](https://img.shields.io/codecov/c/github/rensjaspers/ngx-load-with)](https://app.codecov.io/gh/rensjaspers/ngx-load-with)
 
+## Demo
+
+Check out these live examples of `ngx-load-with` in action:
+
+- [Basic Usage Example](https://stackblitz.com/edit/stackblitz-starters-ygxc6t?file=src%2Fmain.ts): Demonstrates the fundamental features of `ngx-load-with`, including loading and error templates.
+- [Advanced Usage Example](https://stackblitz.com/edit/angular-kkldgb-kldaa7?file=src%2Fapp%2Fapp.component.html): Showcases an e-commerce search operation using `ngx-load-with`, featuring debounce time and a persistent display of previous search results for enhanced user experience.
+
 ## Installation
 
 To install `ngx-load-with`, run the following command:
