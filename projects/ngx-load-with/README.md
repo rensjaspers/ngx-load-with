@@ -201,11 +201,11 @@ interface ErrorTemplateContext {
 
 ## License
 
-`ngx-load-with` is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+`ngx-load-with` is licensed under the MIT License. See the [LICENSE](https://github.com/rensjaspers/ngx-load-with/blob/main/LICENSE) file for details.
 
 ## Contributing
 
-Contributions are welcome! See the [CONTRIBUTING](CONTRIBUTING.md) file for details.
+Contributions are welcome! See the [CONTRIBUTING](https://github.com/rensjaspers/ngx-load-with/blob/main/code_of_conduct.md) file for details.
 
 ## Credits
 
