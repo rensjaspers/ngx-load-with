@@ -1,43 +1,26 @@
 # Contributing to ngx-load-with
 
-Thank you for your interest in contributing to ngx-load-with! Your contributions are greatly appreciated. Please follow the guidelines below to ensure a smooth contribution process.
+We welcome your contributions to `ngx-load-with`! Here are our guidelines:
 
-## Clone the Repository and Create a Pull Request
+## Code of Conduct
 
-1. Fork the repository on GitHub.
-2. Clone your forked repository locally using Git:
+Please read and follow our [Code of Conduct](https://github.com/rensjaspers/ngx-load-with/blob/main/CODE_OF_CONDUCT.md).
 
-```
-  git clone https://github.com/your-username/ngx-load-with.git
-```
+## Issues
 
-3. Create a new branch for your changes:
+If you find any bugs or have a feature request, please check the issue tracker. If your issue doesn't exist, create a new one.
 
-```
-git checkout -b my-feature
-```
+Before you submit your issue search the archive, maybe your question was already answered.
 
-4. Make your desired changes to the library.
+## Pull Requests
 
-5. Ensure your changes have 100% test coverage.
+To contribute, please create a Pull Request (PR):
 
-6. Commit your changes with clear and descriptive messages:
+1. Fork the `ngx-load-with` repo.
+2. Create a new branch in your forked repository.
+3. Make your changes and commit them with a clear message.
+4. Open a Pull Request against the `main` branch of `ngx-load-with`.
 
-```
-git commit -m "Add new feature" or "Fix bug in component"
-```
+Your PR should have a clear title and description. It will be reviewed and, if approved, merged by the maintainers.
 
-7. Push your branch to your forked repository:
-8. Open a pull request (PR) in the main repository.
-
-## Pull Request Description
-
-When opening a pull request, please provide a clear and concise description of the changes you made. Make sure to include the following details:
-
-- Summary of the changes.
-- Purpose of the changes.
-- Any relevant information for reviewers.
-
-## Test Coverage
-
-We strive for 100% test coverage in ngx-load-with. Please ensure that your changes include appropriate unit tests to cover the modified code. Run the tests locally to verify that they pass before submitting your pull request.
+Thanks for helping to improve `ngx-load-with`!
