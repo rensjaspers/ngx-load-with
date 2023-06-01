@@ -88,6 +88,8 @@ export class MyComponent {
 }
 ```
 
+[Working Example on StackBlitz](https://stackblitz.com/edit/stackblitz-starters-srzpra?file=src%2Fdata%2Fdata.component.ts)
+
 ### Searching data
 
 Fetch data based on user input:
@@ -107,6 +109,8 @@ export class MyComponent {
   private http = inject(HttpClient);
 }
 ```
+
+[Working Example on StackBlitz](https://stackblitz.com/edit/angular-kkldgb-kldaa7?file=src%2Fapp%2Fapp.component.html)
 
 ### Reloading data
 
