@@ -205,7 +205,7 @@ interface ErrorTemplateContext {
 
 ## Contributing
 
-Contributions are welcome! See the [CONTRIBUTING](https://github.com/rensjaspers/ngx-load-with/blob/main/code_of_conduct.md) file for details.
+Contributions are welcome! See the [CONTRIBUTING](https://github.com/rensjaspers/ngx-load-with/blob/main/CONTRIBUTING.md) file for details.
 
 ## Credits
 
