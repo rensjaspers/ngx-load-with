@@ -2,7 +2,7 @@
 
 NgxLoadWithDirective is a powerful and versatile Angular directive that handles data loading from a function returning an Observable. It provides a consistent way to manage loading states and display relevant UIs for different loading stages.
 
-[![Build status](https://img.shields.io/github/actions/workflow/status/rensjaspers/ngx-load-with/test.yml?branch=main)](https://github.com/rensjaspers/ngx-load-with/actions/workflows/main.yml)
+[![Build status](https://img.shields.io/github/actions/workflow/status/rensjaspers/ngx-load-with/test.yml?branch=main)](https://github.com/rensjaspers/ngx-load-with/actions/workflows/test.yml)
 [![NPM version](https://img.shields.io/npm/v/ngx-load-with.svg)](https://www.npmjs.com/package/ngx-load-with)
 [![NPM downloads](https://img.shields.io/npm/dm/ngx-load-with.svg)](https://www.npmjs.com/package/ngx-load-with)
 [![MIT license](https://img.shields.io/github/license/rensjaspers/ngx-load-with)](https://github.com/rensjaspers/ngx-load-with/blob/main/LICENSE)
@@ -89,7 +89,7 @@ export class MyComponent {
 }
 ```
 
-[Working Example on StackBlitz](https://stackblitz.com/edit/stackblitz-starters-srzpra?file=src%2Fdata%2Fdata.component.ts)
+[Live Example](https://stackblitz.com/edit/stackblitz-starters-srzpra?file=src%2Fdata%2Fdata.component.ts)
 
 ### Searching data
 
@@ -111,7 +111,7 @@ export class MyComponent {
 }
 ```
 
-[Working Example on StackBlitz](https://stackblitz.com/edit/angular-kkldgb-kldaa7?file=src%2Fapp%2Fapp.component.html)
+[Live Example](https://stackblitz.com/edit/angular-kkldgb-kldaa7?file=src%2Fapp%2Fapp.component.html)
 
 ### Reloading data
 
@@ -120,7 +120,7 @@ Reload data when a button is clicked:
 ```html
 <button (click)="todosLoader.load()">Reload</button>
 
-<ng-template #todosLoader="ngxLoadWith" [ngxLoadWith]="getTodos as todos">
+<ng-template #todosLoader="ngxLoadWith" [ngxLoadWith]="getTodos" let-todos>
   <ul>
     <li *ngFor="let todo of todos">{{todo.title}}</li>
   </ul>
@@ -136,7 +136,7 @@ Reload data when a button is clicked, but display stale data while the new data 
 ```html
 <button (click)="todosLoader.load()">Reload</button>
 
-<ng-template #todosLoader="ngxLoadWith" [ngxLoadWith]="getTodos as todos; staleData: true; let loading = loading">
+<ng-template #todosLoader="ngxLoadWith" [ngxLoadWith]="getTodos" [ngxLoadWithStaleData]="true" let-todos let-loading="loading">
   <div *ngIf="loading">Reloading...</div>
   <ul>
     <li *ngFor="let todo of todos">{{todo.title}}</li>
