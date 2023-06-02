@@ -133,7 +133,7 @@ Reload data when a button is clicked:
 </ng-template>
 ```
 
-> Note: if you want to use the `NgxLoadWithDirective.load` method in your template, you cannot use the `*ngxLoadWith` microsyntax.
+> **Important:** If you plan to use the `NgxLoadWithDirective.load` method in your template, please note that you cannot use the `*ngxLoadWith` microsyntax. See [note on microsyntax](#note-on-microsyntax) for more details.
 
 ### Reloading while continuing to show stale data
 
@@ -152,7 +152,39 @@ Reload data when a button is clicked, but display stale data while the new data 
 </ng-template>
 ```
 
-> Note: if you want to use the `NgxLoadWithDirective.load` method in your template, you cannot use the `*ngxLoadWith` microsyntax.
+> **Important:** If you plan to use the `NgxLoadWithDirective.load` method in your template, please note that you cannot use the `*ngxLoadWith` microsyntax. See [note on microsyntax](#note-on-microsyntax) for more details.
+
+## Note on Microsyntax
+
+When using the `NgxLoadWithDirective`, you have two options for syntax:
+
+1. **Microsyntax:** This shorter, more compact syntax is easy to read and sufficient for many common use cases. For example:
+
+   ```html
+   <div *ngxLoadWith="getTodos as todos">...</div>
+   ```
+
+2. **Normal syntax:** The longer form syntax is necessary when you need to create a directive reference in your template or listen to output events emitted by the directive. For example:
+
+   ```html
+   <ng-template #loader="ngxLoadWith" [ngxLoadWith]="getTodos" let-todos>
+     <div>...</div>
+   </ng-template>
+   ```
+
+   In this example, `#loader="ngxLoadWith"` creates a reference to the `NgxLoadWithDirective` instance, allowing you to call the `load()` method in your template:
+
+   ```html
+   <button (click)="loader.load()">Reload</button>
+   ```
+
+   Additionally, using the normal syntax allows you to listen to output events:
+
+   ```html
+   <ng-template #loader="ngxLoadWith" [ngxLoadWith]="getTodos" (loadSuccess)="onSuccess($event)" (loadError)="onError($event)" let-todos>
+     <div>...</div>
+   </ng-template>
+   ```
 
 ## API
 
