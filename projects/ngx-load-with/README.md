@@ -14,8 +14,8 @@ NgxLoadWithDirective is a powerful and versatile Angular directive that handles 
 
 Check out these live examples of `ngx-load-with` in action:
 
-- [Basic Usage Example](https://stackblitz.com/edit/stackblitz-starters-ygxc6t?file=src%2Fmain.ts): Demonstrates the fundamental features of `ngx-load-with`, including loading and error templates.
-- [Advanced Usage Example](https://stackblitz.com/edit/angular-kkldgb-kldaa7?file=src%2Fapp%2Fapp.component.html): Showcases an e-commerce search operation using `ngx-load-with`, featuring debounce time and a persistent display of previous search results for enhanced user experience.
+- ⚡️ [Basic Usage Example](https://stackblitz.com/edit/stackblitz-starters-ygxc6t?file=src%2Fmain.ts): Demonstrates the fundamental features of `ngx-load-with`, including loading and error templates.
+- ⚡️ [Advanced Usage Example](https://stackblitz.com/edit/angular-kkldgb-kldaa7?file=src%2Fapp%2Fapp.component.html): Showcases an e-commerce search operation using `ngx-load-with`, featuring debounce time and a persistent display of previous search results for enhanced user experience.
 
 ## Installation
 
@@ -43,6 +43,8 @@ export class MyModule {}
 
 Load data from an Observable and display it in your template:
 
+⚡️ **[Live Example](https://stackblitz.com/edit/stackblitz-starters-rrd4du?file=src%2Fmain.ts)**
+
 ```html
 <ul *ngxLoadWith="getTodos as todos">
   <li *ngFor="let todo of todos">{{todo.title}}</li>
@@ -62,6 +64,8 @@ export class MyComponent {
 
 Display a loading message while data is being loaded, and an error message if an error occurs:
 
+⚡️ **[Live Example](https://stackblitz.com/edit/stackblitz-starters-ygxc6t?file=src%2Fmain.ts)**
+
 ```html
 <ul *ngxLoadWith="getTodos as todos; loadingTemplate: loading; errorTemplate: error">
   <li *ngFor="let todo of todos">{{todo.title}}</li>
@@ -73,6 +77,8 @@ Display a loading message while data is being loaded, and an error message if an
 ### Fetching data using route parameters
 
 Load data based on a parameter from the route:
+
+⚡️ **[Live Example](https://stackblitz.com/edit/stackblitz-starters-srzpra?file=src%2Fdata%2Fdata.component.ts)**
 
 ```html
 <div *ngxLoadWith="getTodo as todo; args: routeParams$ | async">{{todo.title}}</div>
@@ -89,11 +95,11 @@ export class MyComponent {
 }
 ```
 
-[Live Example](https://stackblitz.com/edit/stackblitz-starters-srzpra?file=src%2Fdata%2Fdata.component.ts)
-
 ### Searching data
 
 Fetch data based on user input:
+
+⚡️ **[Live Example](https://stackblitz.com/edit/angular-kkldgb-kldaa7?file=src%2Fapp%2Fapp.component.html)**
 
 ```html
 <input ngModel #searchbox />
@@ -111,11 +117,11 @@ export class MyComponent {
 }
 ```
 
-[Live Example](https://stackblitz.com/edit/angular-kkldgb-kldaa7?file=src%2Fapp%2Fapp.component.html)
-
 ### Reloading data
 
 Reload data when a button is clicked:
+
+⚡️ **[Live Example](https://stackblitz.com/edit/stackblitz-starters-eknilk?file=src%2Fmain.ts)**
 
 ```html
 <button (click)="todosLoader.load()">Reload</button>
@@ -132,6 +138,8 @@ Reload data when a button is clicked:
 ### Reloading while continuing to show stale data
 
 Reload data when a button is clicked, but display stale data while the new data is being loaded:
+
+⚡️ **[Live Example](https://stackblitz.com/edit/stackblitz-starters-vy9naj?file=src%2Fmain.ts)**
 
 ```html
 <button (click)="todosLoader.load()">Reload</button>
