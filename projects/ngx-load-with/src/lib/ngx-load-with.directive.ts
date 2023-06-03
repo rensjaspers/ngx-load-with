@@ -74,7 +74,6 @@ export class NgxLoadWithDirective<T = unknown>
 
   /**
    * An optional template to be displayed while the data is being loaded.
-   * The template can access the `debouncing` property of the `LoadingTemplateContext` interface.
    */
   @Input('ngxLoadWithLoadingTemplate')
   loadingTemplate?: TemplateRef<unknown>;
