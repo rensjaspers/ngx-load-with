@@ -46,6 +46,21 @@ export interface ErrorTemplateContext {
   retry: () => void;
 }
 
+interface LoadingUpdate {
+  loading: boolean;
+  error: null;
+}
+
+interface LoadedUpdate<T = unknown> {
+  loaded: boolean;
+  data?: T;
+}
+
+interface ErrorUpdate {
+  error?: Error | null;
+  loading: boolean;
+}
+
 type LoadingPhase = 'loading' | 'loaded' | 'error';
 
 type loadingPhaseHandlers<T> = {
@@ -168,6 +183,8 @@ export class NgxLoadWithDirective<T = unknown>
     private changeDetectorRef: ChangeDetectorRef
   ) {}
 
+  // Lifecycle hooks:
+
   ngOnInit(): void {
     this.monitorAndHandleLoadingState();
     this.load();
@@ -180,6 +197,8 @@ export class NgxLoadWithDirective<T = unknown>
   ngOnDestroy(): void {
     this.directiveDestroyed.next();
   }
+
+  // Public API:
 
   /**
    * Triggers a reload of the data. Previous load requests are cancelled.
@@ -215,6 +234,8 @@ export class NgxLoadWithDirective<T = unknown>
     this.loadingStateOverride.next({ error });
   }
 
+  // State management:
+
   private monitorAndHandleLoadingState() {
     this.loadingState$
       .pipe(
@@ -233,53 +254,6 @@ export class NgxLoadWithDirective<T = unknown>
     this.changeDetectorRef.markForCheck();
   }
 
-  private getAfterResultStateUpdates() {
-    return this.loadRequestTrigger.pipe(
-      debounce(() => this.getDebounceFinished()),
-      tap(() => {
-        this.loadStart.emit();
-      }),
-      switchMap(() => this.executeLoadFnAndHandleResult())
-    );
-  }
-
-  private executeLoadFnAndHandleResult(): Observable<
-    | { loading: boolean; loaded: boolean; data: T }
-    | { loading: boolean; error: Error }
-  > {
-    return this.loadFn(this.args).pipe(
-      tap((data) => {
-        this.loadSuccess.emit(data);
-      }),
-      map((data) => ({ loading: false, loaded: true, data })),
-      catchError((error) => this.handleDataLoadingError(error)),
-      finalize(() => {
-        this.loadFinish.emit();
-      }),
-      takeUntil(this.stop$)
-    );
-  }
-
-  private handleDataLoadingError(
-    error: Error
-  ): Observable<{ loading: boolean; error: Error }> {
-    return of({ loading: false, error }).pipe(
-      tap(() => {
-        this.loadError.emit(error);
-      })
-    );
-  }
-
-  private getDebounceFinished() {
-    return timer(this.debounceTime || 0).pipe(takeUntil(this.stop$));
-  }
-
-  private getBeforeResultStateUpdates() {
-    return this.loadRequestTrigger.pipe(
-      map(() => ({ loading: true, error: null }))
-    );
-  }
-
   private getLoadingPhase(state: LoadingState<T>): LoadingPhase {
     if (state.error) {
       return 'error';
@@ -289,6 +263,8 @@ export class NgxLoadWithDirective<T = unknown>
     }
     return 'loading';
   }
+
+  // Template management:
 
   private handleErrorState(state: LoadingState<T>): void {
     this.clearViewContainer();
@@ -327,6 +303,54 @@ export class NgxLoadWithDirective<T = unknown>
     this.viewContainer.clear();
     this.loadedViewRef = undefined;
   }
+
+  // Load function management:
+
+  private getBeforeResultStateUpdates(): Observable<LoadingUpdate> {
+    return this.loadRequestTrigger.pipe(
+      map(() => ({ loading: true, error: null }))
+    );
+  }
+
+  private getAfterResultStateUpdates() {
+    return this.loadRequestTrigger.pipe(
+      debounce(() => this.getDebounceFinished()),
+      tap(() => {
+        this.loadStart.emit();
+      }),
+      switchMap(() => this.executeLoadFnAndHandleResult())
+    );
+  }
+
+  private executeLoadFnAndHandleResult(): Observable<
+    LoadedUpdate<T> | ErrorUpdate
+  > {
+    return this.loadFn(this.args).pipe(
+      tap((data) => {
+        this.loadSuccess.emit(data);
+      }),
+      map((data) => ({ loading: false, loaded: true, data })),
+      catchError((error) => this.handleDataLoadingError(error)),
+      finalize(() => {
+        this.loadFinish.emit();
+      }),
+      takeUntil(this.stop$)
+    );
+  }
+
+  private handleDataLoadingError(error: Error): Observable<ErrorUpdate> {
+    return of({ loading: false, error }).pipe(
+      tap(() => {
+        this.loadError.emit(error);
+      })
+    );
+  }
+
+  private getDebounceFinished() {
+    return timer(this.debounceTime || 0).pipe(takeUntil(this.stop$));
+  }
+
+  // Type guards:
 
   static ngTemplateContextGuard<T>(
     _dir: NgxLoadWithDirective<T>,
