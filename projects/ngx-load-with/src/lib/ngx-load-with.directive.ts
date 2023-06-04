@@ -183,6 +183,8 @@ export class NgxLoadWithDirective<T = unknown>
     private changeDetectorRef: ChangeDetectorRef
   ) {}
 
+  // Lifecycle hooks:
+
   ngOnInit(): void {
     this.monitorAndHandleLoadingState();
     this.load();
@@ -195,6 +197,8 @@ export class NgxLoadWithDirective<T = unknown>
   ngOnDestroy(): void {
     this.directiveDestroyed.next();
   }
+
+  // Public API:
 
   /**
    * Triggers a reload of the data. Previous load requests are cancelled.
@@ -230,6 +234,8 @@ export class NgxLoadWithDirective<T = unknown>
     this.loadingStateOverride.next({ error });
   }
 
+  // State management:
+
   private monitorAndHandleLoadingState() {
     this.loadingState$
       .pipe(
@@ -246,6 +252,64 @@ export class NgxLoadWithDirective<T = unknown>
     const phase = this.getLoadingPhase(state);
     this.loadingPhaseHandlers[phase](state);
     this.changeDetectorRef.markForCheck();
+  }
+
+  private getLoadingPhase(state: LoadingState<T>): LoadingPhase {
+    if (state.error) {
+      return 'error';
+    }
+    if (state.loaded && (!state.loading || this.staleData)) {
+      return 'loaded';
+    }
+    return 'loading';
+  }
+
+  // Template management:
+
+  private handleErrorState(state: LoadingState<T>): void {
+    this.clearViewContainer();
+    if (this.errorTemplate) {
+      this.viewContainer.createEmbeddedView(this.errorTemplate, {
+        $implicit: state.error as Error,
+        retry: () => this.load(),
+      });
+    }
+  }
+
+  private handleLoadingState(): void {
+    this.clearViewContainer();
+    if (this.loadingTemplate) {
+      this.viewContainer.createEmbeddedView(this.loadingTemplate);
+    }
+  }
+
+  private handleLoadedState(state: LoadingState<T>): void {
+    const data = state.data as T;
+    const loading = state.loading;
+    if (this.loadedViewRef) {
+      this.loadedViewRef.context.$implicit = data;
+      this.loadedViewRef.context.ngxLoadWith = data;
+      this.loadedViewRef.context.loading = loading;
+    } else {
+      this.clearViewContainer();
+      this.loadedViewRef = this.viewContainer.createEmbeddedView(
+        this.templateRef,
+        { $implicit: data, ngxLoadWith: data, loading }
+      );
+    }
+  }
+
+  private clearViewContainer() {
+    this.viewContainer.clear();
+    this.loadedViewRef = undefined;
+  }
+
+  // Load function management:
+
+  private getBeforeResultStateUpdates(): Observable<LoadingUpdate> {
+    return this.loadRequestTrigger.pipe(
+      map(() => ({ loading: true, error: null }))
+    );
   }
 
   private getAfterResultStateUpdates() {
@@ -286,59 +350,7 @@ export class NgxLoadWithDirective<T = unknown>
     return timer(this.debounceTime || 0).pipe(takeUntil(this.stop$));
   }
 
-  private getBeforeResultStateUpdates(): Observable<LoadingUpdate> {
-    return this.loadRequestTrigger.pipe(
-      map(() => ({ loading: true, error: null }))
-    );
-  }
-
-  private getLoadingPhase(state: LoadingState<T>): LoadingPhase {
-    if (state.error) {
-      return 'error';
-    }
-    if (state.loaded && (!state.loading || this.staleData)) {
-      return 'loaded';
-    }
-    return 'loading';
-  }
-
-  private handleErrorState(state: LoadingState<T>): void {
-    this.clearViewContainer();
-    if (this.errorTemplate) {
-      this.viewContainer.createEmbeddedView(this.errorTemplate, {
-        $implicit: state.error as Error,
-        retry: () => this.load(),
-      });
-    }
-  }
-
-  private handleLoadingState(): void {
-    this.clearViewContainer();
-    if (this.loadingTemplate) {
-      this.viewContainer.createEmbeddedView(this.loadingTemplate);
-    }
-  }
-
-  private handleLoadedState(state: LoadingState<T>): void {
-    const data = state.data as T;
-    const loading = state.loading;
-    if (this.loadedViewRef) {
-      this.loadedViewRef.context.$implicit = data;
-      this.loadedViewRef.context.ngxLoadWith = data;
-      this.loadedViewRef.context.loading = loading;
-    } else {
-      this.clearViewContainer();
-      this.loadedViewRef = this.viewContainer.createEmbeddedView(
-        this.templateRef,
-        { $implicit: data, ngxLoadWith: data, loading }
-      );
-    }
-  }
-
-  private clearViewContainer() {
-    this.viewContainer.clear();
-    this.loadedViewRef = undefined;
-  }
+  // Type guards:
 
   static ngTemplateContextGuard<T>(
     _dir: NgxLoadWithDirective<T>,
