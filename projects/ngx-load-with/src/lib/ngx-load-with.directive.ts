@@ -67,6 +67,29 @@ type loadingPhaseHandlers<T> = {
   [K in LoadingPhase]: (state: LoadingState<T>) => void;
 };
 
+/**
+ * The NgxLoadWithDirective is an Angular directive that provides an easier way to handle
+ * asynchronous data loading within components. It allows for the injection of templates
+ * for different loading states, which includes 'loading', 'loaded', and 'error'.
+ *
+ * The directive accepts a load function that returns an Observable of data to be loaded.
+ * It also accepts optional arguments that can be passed to this load function. Any changes
+ * to these arguments trigger a reload of the data. The directive also allows for the
+ * injection of different templates to be displayed for each of these states.
+ *
+ * The following are the main features of the directive:
+ *
+ * - Handles the UI state transitions between 'loading', 'loaded', and 'error' states.
+ * - Accepts a custom function for loading the data that returns an Observable.
+ * - Allows for the injection of custom templates for 'loading', 'loaded', and 'error' states.
+ * - Emits different events based on the loading state, including 'loadStart', 'loadSuccess',
+ *   'loadError', and 'loadFinish'.
+ * - Allows the user to control the debounce time for the loading function.
+ * - Supports the use of stale data during reloading.
+ *
+ * This directive helps in creating a responsive and informative UI during data loading processes
+ * and provides better control and customization of this asynchronous process.
+ */
 @Directive({
   selector: '[ngxLoadWith]',
   exportAs: 'ngxLoadWith',
