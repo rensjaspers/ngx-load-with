@@ -143,6 +143,7 @@ export class NgxLoadWithDirective<T = unknown>
   @Output() loadingStateChange = new EventEmitter<LoadingState<T>>();
 
   private loadedViewRef?: EmbeddedViewRef<LoadedTemplateContext<T>>;
+  private loadingViewRef?: EmbeddedViewRef<unknown>;
 
   private readonly loadRequestTrigger = new Subject<void>();
   private readonly loadCancelTrigger = new Subject<void>();
@@ -278,9 +279,14 @@ export class NgxLoadWithDirective<T = unknown>
   }
 
   private handleLoadingState(): void {
+    if (this.loadingViewRef) {
+      return;
+    }
     this.clearViewContainer();
     if (this.loadingTemplate) {
-      this.viewContainer.createEmbeddedView(this.loadingTemplate);
+      this.loadingViewRef = this.viewContainer.createEmbeddedView(
+        this.loadingTemplate
+      );
     }
   }
 
@@ -303,6 +309,7 @@ export class NgxLoadWithDirective<T = unknown>
   private clearViewContainer() {
     this.viewContainer.clear();
     this.loadedViewRef = undefined;
+    this.loadingViewRef = undefined;
   }
 
   // Load function management:

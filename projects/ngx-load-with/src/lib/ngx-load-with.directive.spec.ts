@@ -86,6 +86,30 @@ describe('NgxLoadWithDirective', () => {
     expect(getTextContent()).toEqual('test');
   }));
 
+  it('should render the loading template only once during multiple consecutive loading states', fakeAsync(() => {
+    component.loadFn = () => of('test').pipe(delay(1000));
+    fixture.detectChanges();
+
+    const renderSpy = spyOn(
+      component.loader['viewContainer'],
+      'createEmbeddedView'
+    ).and.callThrough();
+
+    // Trigger multiple consecutive loading states
+
+    tick(10);
+    component.loader.load();
+    tick(10);
+    component.loader.load();
+    tick(10);
+    component.loader.load();
+
+    tick(1000);
+    fixture.detectChanges();
+
+    expect(renderSpy).toHaveBeenCalledTimes(1);
+  }));
+
   it('should display the error template when an error occurs', fakeAsync(() => {
     component.loadFn = () => throwError(() => new Error('An error occurred'));
 
