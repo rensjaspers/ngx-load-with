@@ -15,13 +15,13 @@ import {
   Observable,
   Subject,
   catchError,
-  concat,
   debounce,
   finalize,
   map,
   merge,
   of,
   scan,
+  startWith,
   switchMap,
   takeUntil,
   tap,
@@ -166,15 +166,16 @@ export class NgxLoadWithDirective<T = unknown>
     error: (state) => this.handleErrorState(state),
   };
 
-  private readonly loadingState$: Observable<LoadingState<T>> = concat(
-    of(this.initialLoadingState),
-    merge(
-      this.loadingStateOverride,
-      this.getBeforeResultStateUpdates(),
-      this.getAfterResultStateUpdates()
-    )
+  private readonly loadingState$: Observable<LoadingState<T>> = merge(
+    this.loadingStateOverride,
+    this.getBeforeResultStateUpdates(),
+    this.getAfterResultStateUpdates()
   ).pipe(
-    scan((state, update) => ({ ...state, ...update }), this.initialLoadingState)
+    scan(
+      (state, update) => ({ ...state, ...update }),
+      this.initialLoadingState
+    ),
+    startWith(this.initialLoadingState)
   );
 
   constructor(
