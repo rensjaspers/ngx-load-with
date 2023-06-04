@@ -46,6 +46,21 @@ export interface ErrorTemplateContext {
   retry: () => void;
 }
 
+interface LoadingUpdate {
+  loading: boolean;
+  error: null;
+}
+
+interface LoadedUpdate<T = unknown> {
+  loaded: boolean;
+  data?: T;
+}
+
+interface ErrorUpdate {
+  error?: Error | null;
+  loading: boolean;
+}
+
 type LoadingPhase = 'loading' | 'loaded' | 'error';
 
 type loadingPhaseHandlers<T> = {
@@ -244,8 +259,7 @@ export class NgxLoadWithDirective<T = unknown>
   }
 
   private executeLoadFnAndHandleResult(): Observable<
-    | { loading: boolean; loaded: boolean; data: T }
-    | { loading: boolean; error: Error }
+    LoadedUpdate<T> | ErrorUpdate
   > {
     return this.loadFn(this.args).pipe(
       tap((data) => {
@@ -260,9 +274,7 @@ export class NgxLoadWithDirective<T = unknown>
     );
   }
 
-  private handleDataLoadingError(
-    error: Error
-  ): Observable<{ loading: boolean; error: Error }> {
+  private handleDataLoadingError(error: Error): Observable<ErrorUpdate> {
     return of({ loading: false, error }).pipe(
       tap(() => {
         this.loadError.emit(error);
@@ -274,7 +286,7 @@ export class NgxLoadWithDirective<T = unknown>
     return timer(this.debounceTime || 0).pipe(takeUntil(this.stop$));
   }
 
-  private getBeforeResultStateUpdates() {
+  private getBeforeResultStateUpdates(): Observable<LoadingUpdate> {
     return this.loadRequestTrigger.pipe(
       map(() => ({ loading: true, error: null }))
     );
