@@ -1,4 +1,4 @@
-# ngx-load-with
+# NgxLoadWith
 
 NgxLoadWithDirective is a powerful and versatile Angular directive that handles data loading from a function returning an Observable. It provides a consistent way to manage loading states and display relevant UIs for different loading stages.
 
