@@ -210,26 +210,26 @@ When using the `NgxLoadWithDirective`, you have two options for syntax:
 
 ### Inputs
 
-| Name              | Type                                | Description                                                                                                  |
-| ----------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `ngxLoadWith`     | `(args?: any) => Observable<T>`     | A function that returns an `Observable` of the data to be loaded. Changes to this function trigger a reload. |
-| `args`            | `unknown`                           | An argument to be passed to the `ngxLoadWith` function. Changes to this argument will trigger a reload.      |
-| `loadingTemplate` | `TemplateRef<unknown>`              | An optional template to be displayed while the data is being loaded.                                         |
-| `errorTemplate`   | `TemplateRef<ErrorTemplateContext>` | An optional template to be displayed when an error occurs while loading the data.                            |
-| `debounceTime`    | `number`                            | The amount of time in milliseconds to debounce the load trigger.                                             |
-| `staleData`       | `boolean`                           | A boolean indicating whether to show stale data when reloading.                                              |
+| Name and Type                                                   | Description                                                                                                  |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `ngxLoadWith: (args?: any) => Observable<T>`                    | A function that returns an `Observable` of the data to be loaded. Changes to this function trigger a reload. |
+| `args: unknown`                                                 | An argument to be passed to the `ngxLoadWith` function. Changes to this argument will trigger a reload.      |
+| `loadingTemplate: TemplateRef<unknown>`                         | An optional template to be displayed while the data is being loaded.                                         |
+| `errorTemplate: TemplateRef<ErrorTemplateContext>`              | An optional template to be displayed when an error occurs while loading the data.                            |
+| `debounceTime: number`                                          | The amount of time in milliseconds to debounce the load trigger.                                             |
+| `staleData: boolean`                                            | A boolean indicating whether to show stale data when reloading.                                              |
 
 > **Important:** The names in this table represent the shorthand names used in microsyntax. For the corresponding directive attribute names, prepend `ngxLoadWith` to the given name. For example, `loadingTemplate` in microsyntax becomes `ngxLoadWithLoadingTemplate` in the directive. Refer to [Note on Microsyntax](#note-on-microsyntax) for more information.
 
 ### Outputs
 
-| Name                 | Type                            | Description                                                                     |
-| -------------------- | ------------------------------- | ------------------------------------------------------------------------------- |
-| `loadStart`          | `EventEmitter<void>`            | Emits when the data loading process starts.                                     |
-| `loadSuccess`        | `EventEmitter<T>`               | Emits when the data loading process is successful.                              |
-| `loadError`          | `EventEmitter<Error>`           | Emits when an error occurs while loading the data.                              |
-| `loadFinish`         | `EventEmitter<void>`            | Emits when the data loading process finishes, regardless of success or failure. |
-| `loadingStateChange` | `EventEmitter<LoadingState<T>>` | Emits when the loading state changes.                                           |
+| Name and Type                                        | Description                                                                     |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `loadStart: EventEmitter<void>`                      | Emits when the data loading process starts.                                     |
+| `loadSuccess: EventEmitter<T>`                       | Emits when the data loading process is successful.                              |
+| `loadError: EventEmitter<Error>`                     | Emits when an error occurs while loading the data.                              |
+| `loadFinish: EventEmitter<void>`                     | Emits when the data loading process finishes, regardless of success or failure. |
+| `loadingStateChange: EventEmitter<LoadingState<T>>`  | Emits when the loading state changes.                                           |
 
 > **Important:** If you plan to listen to the above output events, please note that you cannot use the `*ngxLoadWith` microsyntax. See [note on microsyntax](#note-on-microsyntax) for more details on using the normal syntax.
 
