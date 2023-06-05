@@ -1,6 +1,6 @@
 # NgxLoadWith
 
-NgxLoadWithDirective is a powerful and versatile Angular directive that handles data loading from a function returning an Observable. It provides a consistent way to manage loading states and display relevant UIs for different loading stages.
+`NgxLoadWithDirective` is a powerful and versatile [Angular structural directive](https://angular.io/guide/structural-directives) designed to simplify the process of dynamically loading Observable-based data. It provides a unified approach to managing loading states and elegantly displaying corresponding UIs at different stages of the loading process.
 
 [![Build status](https://img.shields.io/github/actions/workflow/status/rensjaspers/ngx-load-with/test.yml?branch=main)](https://github.com/rensjaspers/ngx-load-with/actions/workflows/test.yml)
 [![NPM version](https://img.shields.io/npm/v/ngx-load-with.svg)](https://www.npmjs.com/package/ngx-load-with)
@@ -9,6 +9,24 @@ NgxLoadWithDirective is a powerful and versatile Angular directive that handles 
 [![Minzipped size](https://img.shields.io/bundlephobia/minzip/ngx-load-with)](https://bundlephobia.com/result?p=ngx-load-with)
 [![CodeFactor](https://img.shields.io/codefactor/grade/github/rensjaspers/ngx-load-with)](https://www.codefactor.io/repository/github/rensjaspers/ngx-load-with)
 [![Codecov](https://img.shields.io/codecov/c/github/rensjaspers/ngx-load-with)](https://app.codecov.io/gh/rensjaspers/ngx-load-with)
+
+## Table of Contents
+
+- [Demo](#demo)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Basic usage](#basic-usage)
+  - [Loading and error templates](#loading-and-error-templates)
+  - [Fetching data using route parameters](#fetching-data-using-route-parameters)
+  - [Searching data](#searching-data)
+  - [Reloading data](#reloading-data)
+  - [Reloading while continuing to show stale data](#reloading-while-continuing-to-show-stale-data)
+- [Note on Microsyntax](#note-on-microsyntax)
+- [API](#api)
+- [FAQ](#faq)
+- [License](#license)
+- [Contributing](#contributing)
+- [Credits](#credits)
 
 ## Demo
 
@@ -24,6 +42,8 @@ To install `ngx-load-with`, run the following command:
 ```bash
 npm install ngx-load-with
 ```
+
+> Note: you need Angular version 15.
 
 To use `ngx-load-with`, import the `NgxLoadWithModule` module in your Angular module:
 
@@ -161,13 +181,13 @@ When using the `NgxLoadWithDirective`, you have two options for syntax:
 1. **Microsyntax:** This shorter, more compact syntax is easy to read and sufficient for many common use cases. For example:
 
    ```html
-   <div *ngxLoadWith="getTodos as todos">...</div>
+   <div *ngxLoadWith="getTodo as todo; args: id">...</div>
    ```
 
 2. **Normal syntax:** The longer form syntax is necessary when you need to create a directive reference in your template or listen to output events emitted by the directive. For example:
 
    ```html
-   <ng-template #loader="ngxLoadWith" [ngxLoadWith]="getTodos" let-todos>
+   <ng-template #loader="ngxLoadWith" [ngxLoadWith]="getTodo" [ngxLoadWithArgs]="id" let-todo>
      <div>...</div>
    </ng-template>
    ```
@@ -190,14 +210,16 @@ When using the `NgxLoadWithDirective`, you have two options for syntax:
 
 ### Inputs
 
-| Name                         | Type                                | Description                                                                                                  |
-| ---------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `ngxLoadWith`                | `(args?: any) => Observable<T>`     | A function that returns an `Observable` of the data to be loaded. Changes to this function trigger a reload. |
-| `ngxLoadWithArgs`            | `unknown`                           | An argument to be passed to the `loadFn` function. Changes to this argument will trigger a reload.           |
-| `ngxLoadWithLoadingTemplate` | `TemplateRef<unknown>`              | An optional template to be displayed while the data is being loaded.                                         |
-| `ngxLoadWithErrorTemplate`   | `TemplateRef<ErrorTemplateContext>` | An optional template to be displayed when an error occurs while loading the data.                            |
-| `ngxLoadWithDebounceTime`    | `number`                            | The amount of time in milliseconds to debounce the load trigger.                                             |
-| `ngxLoadWithStaleData`       | `boolean`                           | A boolean indicating whether to show stale data when reloading.                                              |
+| Name              | Type                                | Description                                                                                                  |
+| ----------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `ngxLoadWith`     | `(args?: any) => Observable<T>`     | A function that returns an `Observable` of the data to be loaded. Changes to this function trigger a reload. |
+| `args`            | `unknown`                           | An argument to be passed to the `ngxLoadWith` function. Changes to this argument will trigger a reload.      |
+| `loadingTemplate` | `TemplateRef<unknown>`              | An optional template to be displayed while the data is being loaded.                                         |
+| `errorTemplate`   | `TemplateRef<ErrorTemplateContext>` | An optional template to be displayed when an error occurs while loading the data.                            |
+| `debounceTime`    | `number`                            | The amount of time in milliseconds to debounce the load trigger.                                             |
+| `staleData`       | `boolean`                           | A boolean indicating whether to show stale data when reloading.                                              |
+
+> **Important:** The names in this table represent the shorthand names used in microsyntax. For the corresponding directive attribute names, prepend `ngxLoadWith` to the given name. For example, `loadingTemplate` in microsyntax becomes `ngxLoadWithLoadingTemplate` in the directive. Refer to [Note on Microsyntax](#note-on-microsyntax) for more information.
 
 ### Outputs
 
@@ -209,14 +231,18 @@ When using the `NgxLoadWithDirective`, you have two options for syntax:
 | `loadFinish`         | `EventEmitter<void>`            | Emits when the data loading process finishes, regardless of success or failure. |
 | `loadingStateChange` | `EventEmitter<LoadingState<T>>` | Emits when the loading state changes.                                           |
 
+> **Important:** If you plan to listen to the above output events, please note that you cannot use the `*ngxLoadWith` microsyntax. See [note on microsyntax](#note-on-microsyntax) for more details on using the normal syntax.
+
 ### Methods
 
-| Name                     | Description                                                                                |
-| ------------------------ | ------------------------------------------------------------------------------------------ |
-| `load()`                 | Triggers a reload of the data. Previous load requests are cancelled.                       |
-| `cancel()`               | Cancels any pending load requests.                                                         |
-| `setData(data: T)`       | Updates the loading state as if the passed data were loaded through the `loadFn` function. |
-| `setError(error: Error)` | Updates the loading state as if the passed error were thrown by the `loadFn` function.     |
+| Name                     | Description                                                                                     |
+| ------------------------ | ----------------------------------------------------------------------------------------------- |
+| `load()`                 | Triggers a reload of the data. Previous load requests are cancelled.                            |
+| `cancel()`               | Cancels any pending load requests.                                                              |
+| `setData(data: T)`       | Updates the loading state as if the passed data were loaded through the `ngxLoadWith` function. |
+| `setError(error: Error)` | Updates the loading state as if the passed error were thrown by the `ngxLoadWith` function.     |
+
+> **Important:** If you plan to use the above methods in your template, please note that you cannot use the `*ngxLoadWith` microsyntax. See [note on microsyntax](#note-on-microsyntax) for more details on using the normal syntax.
 
 ### Interfaces
 
@@ -239,6 +265,30 @@ interface ErrorTemplateContext {
   retry: () => void;
 }
 ```
+
+## FAQ
+
+### Why does the directive only accept a function that returns an observable instead of just the observable?
+
+The design choice to accept a function that returns an Observable (instead of directly accepting the Observable) was made to allow for the passing of dynamic arguments via the `[ngxLoadWithArgs]` directive (or simply `args` in [microsyntax](#note-on-microsyntax)).
+
+This choice greatly simplifies scenarios where you need to react to changing arguments. For instance, in cases where your data loading operation depends on the route parameters, changes to these parameters would require a reload of the data. By accepting a function that returns an Observable, `ngx-load-with` automatically manages this reloading process whenever the arguments change.
+
+An example of this use case is demonstrated in the ["Fetching data using route parameters"](#fetching-data-using-route-parameters) section, where the route parameters are passed as arguments to the `getTodo` function. Here, any changes to the route parameters trigger a reload of the data.
+
+This approach saves you from the hassle of having to manually pipe your route parameters to a `switchMap` operator, which then triggers your data loading function:
+
+```typescript
+this.route.params.pipe(
+  switchMap((params) =>
+    concat(
+      of({ loading: true }),
+      this.getData(params).pipe(
+        map((data) => ({ data, loading: false }))
+        // etc.
+```
+
+With `ngx-load-with`, all of this logic is handled for you automatically. This provides a cleaner, more intuitive solution that makes your code easier to understand and maintain.
 
 ## License
 
