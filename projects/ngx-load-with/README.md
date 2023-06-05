@@ -43,7 +43,7 @@ To install `ngx-load-with`, run the following command:
 npm install ngx-load-with
 ```
 
-> Note: you need Angular version 15.
+> Note: you need Angular version 15 or higher.
 
 To use `ngx-load-with`, import the `NgxLoadWithModule` module in your Angular module:
 
