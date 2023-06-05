@@ -270,7 +270,7 @@ interface ErrorTemplateContext {
 
 ### Why does the directive only accept a function that returns an observable instead of just the observable?
 
-The design choice to accept a function that returns an Observable (instead of directly accepting the Observable) was made to allow for the passing of dynamic arguments via the `[ngxLoadWithArgs]` directive (or simply `args` in [microsyntax](#note-on-microsyntax)).
+The design choice to accept a function that returns an Observable (instead of directly accepting the Observable) was made to allow for the passing of dynamic arguments via the `[ngxLoadWithArgs]` input.
 
 This choice greatly simplifies scenarios where you need to react to changing arguments. For instance, in cases where your data loading operation depends on the route parameters, changes to these parameters would require a reload of the data. By accepting a function that returns an Observable, `ngx-load-with` automatically manages this reloading process whenever the arguments change.
 
