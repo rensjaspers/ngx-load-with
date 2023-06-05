@@ -219,8 +219,6 @@ When using the `NgxLoadWithDirective`, you have two options for syntax:
 | `@Input('ngxLoadWithDebounceTime') debounceTime: number`                               | The amount of time in milliseconds to debounce the load trigger.                                             |
 | `@Input( 'ngxLoadWithStaleData') staleData: boolean`                                   | A boolean indicating whether to show previously loaded data while reloading.                                 |
 
-> **Important:** The names in this table represent the shorthand names used in microsyntax. For the corresponding directive attribute names, prepend `ngxLoadWith` to the given name. For example, `loadingTemplate` in microsyntax becomes `ngxLoadWithLoadingTemplate` in the directive. Refer to [Note on Microsyntax](#note-on-microsyntax) for more information.
-
 ### Outputs
 
 | Name                                                          | Description                                                                     |
