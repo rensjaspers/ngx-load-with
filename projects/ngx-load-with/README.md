@@ -1,6 +1,6 @@
 # NgxLoadWith
 
-`NgxLoadWithDirective` is a powerful and versatile [Angular structural directive](https://angular.io/guide/structural-directives) designed to simplify the process of dynamically loading Observable-based data. It provides a unified approach to managing loading states and elegantly displaying corresponding UIs at different stages of the loading process.
+Welcome to `NgxLoadWith`, a powerful tool for Observable-based data loading in Angular.
 
 [![Build status](https://img.shields.io/github/actions/workflow/status/rensjaspers/ngx-load-with/test.yml?branch=main)](https://github.com/rensjaspers/ngx-load-with/actions/workflows/test.yml)
 [![NPM version](https://img.shields.io/npm/v/ngx-load-with.svg)](https://www.npmjs.com/package/ngx-load-with)
@@ -9,6 +9,26 @@
 [![Minzipped size](https://img.shields.io/bundlephobia/minzip/ngx-load-with)](https://bundlephobia.com/result?p=ngx-load-with)
 [![CodeFactor](https://img.shields.io/codefactor/grade/github/rensjaspers/ngx-load-with)](https://www.codefactor.io/repository/github/rensjaspers/ngx-load-with)
 [![Codecov](https://img.shields.io/codecov/c/github/rensjaspers/ngx-load-with)](https://app.codecov.io/gh/rensjaspers/ngx-load-with)
+
+```html
+<div *ngxLoadWith="unreadCount$ as count">You have {{count}} unread messages</div>
+<!-- Output: You have 0 unread messages -->
+```
+
+`NgxLoadWith` simplifies handling `Observable` data and managing loading states in your Angular templates. By using the `*ngxLoadWith` structural directive, you can bind an Observable data source and manage how this data is displayed in your templates, without needing to manually handle different loading states with `*ngIf`.
+
+**Key features:**
+
+- 💡 **Automated UI State Management:** Automatically switch between loading, success, and error templates without the need of `*ngIf`.
+- 🚀 **Performance:** Optimized for efficiency, `NgxLoadWith` aligns seamlessly with Angular's OnPush change detection strategy for fluid UI updates.
+- 🛡️ **Memory Safety:** By automatically unsubscribing from `Observables`, `NgxLoadWith` guards your application against potential memory leaks.
+- ⚖️ **Lightweight and Independent:** As a lean library with no dependencies, `NgxLoadWith` integrates smoothly into any project.
+- ⚡️ **Dynamic Data Loading:** Load data based on dynamic parameters like route parameters with minimal RxJS knowledge.
+- 🎮 **Control Over Data Loading Process:** `NgxLoadWith` equips you with convenient methods for reloading and canceling requests.
+
+Embrace a cleaner, more efficient, and intuitive approach to data loading in Angular with `NgxLoadWith`.
+
+Follow our guide below to start using `NgxLoadWith` in your Angular project.
 
 ## Table of Contents
 
