@@ -62,24 +62,7 @@ export class MyModule {}
 
 Load data from an Observable and display it in your template:
 
-⚡️ **[Live Example](https://stackblitz.com/edit/stackblitz-starters-rrd4du?file=src%2Fmain.ts)**
-
-```html
-<ul *ngxLoadWith="getTodos as todos">
-  <li *ngFor="let todo of todos">{{todo.title}}</li>
-</ul>
-```
-
-```typescript
-@Component({...})
-export class MyComponent {
-  getTodos = () => this.http.get<Todo[]>('api/todos');
-
-  private http = inject(HttpClient);
-}
-```
-
-You can also pass a plain Observable ([live example](https://stackblitz.com/edit/stackblitz-starters-hygzxn?file=src%2Fmain.ts)):
+⚡️ **[Live Example](https://stackblitz.com/edit/stackblitz-starters-hygzxn?file=src%2Fmain.ts)**
 
 ```html
 <div *ngxLoadWith="todos$ as todo">{{todo.title}}</div>
@@ -92,9 +75,6 @@ export class MyComponent {
 }
 ```
 
-> **Warning:** if you provide a plain Observable instead of a function,
-> you will not be able to use dynamic arguments from the `args` input. See [this section](#why-use-a-function-returning-an-observable-instead-of-a-direct-observable) for more information.
-
 ### Loading and error templates
 
 Display a loading message while data is being loaded, and an error message if an error occurs:
@@ -102,7 +82,7 @@ Display a loading message while data is being loaded, and an error message if an
 ⚡️ **[Live Example](https://stackblitz.com/edit/stackblitz-starters-ygxc6t?file=src%2Fmain.ts)**
 
 ```html
-<ul *ngxLoadWith="getTodos as todos; loadingTemplate: loading; errorTemplate: error">
+<ul *ngxLoadWith="todos$ as todos; loadingTemplate: loading; errorTemplate: error">
   <li *ngFor="let todo of todos">{{todo.title}}</li>
 </ul>
 <ng-template #loading>Loading...</ng-template>
@@ -111,7 +91,9 @@ Display a loading message while data is being loaded, and an error message if an
 
 ### Loading based on dynamic arguments
 
-By leveraging the `args` input in `ngx-load-with`, data can be dynamically loaded in response to changes in these arguments. This automatic reloading saves manual tracking and loading efforts, making your code cleaner and more efficient. Detailed explanation can be found [here](#why-use-a-function-returning-an-observable-instead-of-a-direct-observable).
+When using dynamic arguments with `ngx-load-with`, you will pass a function that takes these arguments and returns an Observable, instead of directly passing a plain Observable. This function allows `ngx-load-with` to automatically manage the reloading process when these dynamic arguments change, leading to cleaner and more efficient code. Learn more about this in the [FAQ](#how-do-dynamic-arguments-enhance-ngx-load-with) section.
+
+The following examples illustrate how to fetch data using route parameters and based on user input.
 
 **Fetching data using route parameters:**
 
@@ -161,7 +143,7 @@ Reload data when a button is clicked:
 ```html
 <button (click)="todosLoader.load()">Reload</button>
 
-<ng-template #todosLoader="ngxLoadWith" [ngxLoadWith]="getTodos" let-todos>
+<ng-template #todosLoader="ngxLoadWith" [ngxLoadWith]="todos$" let-todos>
   <ul>
     <li *ngFor="let todo of todos">{{todo.title}}</li>
   </ul>
@@ -179,7 +161,7 @@ Reload data when a button is clicked, but display stale data while the new data 
 ```html
 <button (click)="todosLoader.load()">Reload</button>
 
-<ng-template #todosLoader="ngxLoadWith" [ngxLoadWith]="getTodos" [ngxLoadWithStaleData]="true" let-todos let-loading="loading">
+<ng-template #todosLoader="ngxLoadWith" [ngxLoadWith]="todos$" [ngxLoadWithStaleData]="true" let-todos let-loading="loading">
   <div *ngIf="loading">Reloading...</div>
   <ul>
     <li *ngFor="let todo of todos">{{todo.title}}</li>
@@ -281,11 +263,11 @@ interface ErrorTemplateContext {
 
 ## FAQ
 
-### Why use a function returning an Observable instead of a direct Observable?
+### How do dynamic arguments enhance ngx-load-with?
 
-The choice of accepting a function returning an Observable, instead of just an Observable, stems from the ability to pass dynamic arguments using the `[ngxLoadWithArgs]` input.
+Dynamic arguments play a significant role in the design and usage of ngx-load-with. By accepting a function that returns an Observable, and allowing the passage of dynamic arguments through the [ngxLoadWithArgs] input, ngx-load-with provides a powerful and flexible tool to handle complex data fetching scenarios.
 
-This design simplifies scenarios where the data fetching depends on changing parameters. For example, when the data load is tied to route parameters, any change in these parameters necessitates data reloading. `ngx-load-with` automatically manages this process by reacting to the changes in these arguments.
+Consider a situation where your data loading operation depends on changing parameters, such as route parameters. Whenever these parameters change, a reload of data becomes necessary. ngx-load-with caters to this requirement automatically by listening to the argument changes and triggering the appropriate data fetching function.
 
 A relevant example is found in the ["Loading based on dynamic arguments"](#loading-based-on-dynamic-arguments) section. Here, route parameters are passed as arguments to the `getTodo` function, and any alteration in these parameters triggers a data reload.
 
