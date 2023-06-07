@@ -209,7 +209,7 @@ When using the `NgxLoadWithDirective`, you have two options for syntax:
 
 | Name                                                                                   | Description                                                                                                                  |
 | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `@Input('ngxLoadWith') ngxLoadWith: () => Observable<T> \| Observable<T>`              | A function returning an `Observable` of the data to be loaded, or a plain Observable.                                        |
+| `@Input('ngxLoadWith') ngxLoadWith: (args?: any) => Observable<T> \| Observable<T>`    | A function returning an `Observable` of the data to be loaded, or a plain Observable.                                        |
 | `@Input('ngxLoadWithArgs') args: unknown`                                              | An argument to be passed to the `ngxLoadWith` function (if it's a function). Changes to this argument will trigger a reload. |
 | `@Input('ngxLoadWithLoadingTemplate') loadingTemplate: TemplateRef<unknown>`           | An optional template to be displayed while the data is being loaded.                                                         |
 | `@Input('ngxLoadWithErrorTemplate') errorTemplate: TemplateRef< ErrorTemplateContext>` | An optional template to be displayed when an error occurs while loading the data.                                            |
