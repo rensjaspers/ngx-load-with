@@ -17,8 +17,7 @@
 - [Usage](#usage)
   - [Basic usage](#basic-usage)
   - [Loading and error templates](#loading-and-error-templates)
-  - [Fetching data using route parameters](#fetching-data-using-route-parameters)
-  - [Searching data](#searching-data)
+  - [Loading based on dynamic arguments](#loading-based-on-dynamic-arguments)
   - [Reloading data](#reloading-data)
   - [Reloading while continuing to show stale data](#reloading-while-continuing-to-show-stale-data)
 - [Note on Microsyntax](#note-on-microsyntax)
@@ -80,6 +79,24 @@ export class MyComponent {
 }
 ```
 
+You can also pass a plain Observable:
+
+```html
+<div *ngxLoadWith="todos$ as todo">{{todo.title}}</div>
+```
+
+```typescript
+@Component({...})
+export class MyComponent {
+  todos$ = this.http.get<Todo[]>('api/todos');
+
+  private http = inject(HttpClient);
+}
+```
+
+> **Warning:** if you provide a plain Observable instead of a function,
+> you will not be able to use dynamic arguments from the `args` input. See [this section](#why-use-a-function-returning-an-observable-instead-of-a-direct-observable) for more information.
+
 ### Loading and error templates
 
 Display a loading message while data is being loaded, and an error message if an error occurs:
@@ -94,9 +111,11 @@ Display a loading message while data is being loaded, and an error message if an
 <ng-template #error let-error>{{error.message}}</ng-template>
 ```
 
-### Fetching data using route parameters
+### Loading based on dynamic arguments
 
-Load data based on a parameter from the route:
+By leveraging the `args` input in `ngx-load-with`, data can be dynamically loaded in response to changes in these arguments. This automatic reloading saves manual tracking and loading efforts, making your code cleaner and more efficient. Detailed explanation can be found [here](#why-use-a-function-returning-an-observable-instead-of-a-direct-observable).
+
+**Fetching data using route parameters:**
 
 ⚡️ **[Live Example](https://stackblitz.com/edit/stackblitz-starters-srzpra?file=src%2Fdata%2Fdata.component.ts)**
 
@@ -115,9 +134,7 @@ export class MyComponent {
 }
 ```
 
-### Searching data
-
-Fetch data based on user input:
+**Searching data: fetch data based on user input:**
 
 ⚡️ **[Live Example](https://stackblitz.com/edit/angular-kkldgb-kldaa7?file=src%2Fapp%2Fapp.component.html)**
 
@@ -210,14 +227,14 @@ When using the `NgxLoadWithDirective`, you have two options for syntax:
 
 ### Inputs
 
-| Name                                                                                   | Description                                                                                                  |
-| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `@Input('ngxLoadWith') loadFn: (args?: any) => Observable<T>`                          | A function that returns an `Observable` of the data to be loaded. Changes to this function trigger a reload. |
-| `@Input('ngxLoadWithArgs') args: unknown`                                              | An argument to be passed to the `ngxLoadWith` function. Changes to this argument will trigger a reload.      |
-| `@Input('ngxLoadWithLoadingTemplate') loadingTemplate: TemplateRef<unknown>`           | An optional template to be displayed while the data is being loaded.                                         |
-| `@Input('ngxLoadWithErrorTemplate') errorTemplate: TemplateRef< ErrorTemplateContext>` | An optional template to be displayed when an error occurs while loading the data.                            |
-| `@Input('ngxLoadWithDebounceTime') debounceTime: number`                               | The amount of time in milliseconds to debounce the load trigger.                                             |
-| `@Input( 'ngxLoadWithStaleData') staleData: boolean`                                   | A boolean indicating whether to show previously loaded data while reloading.                                 |
+| Name                                                                                   | Description                                                                                                                  |
+| -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `@Input('ngxLoadWith') ngxLoadWith: () => Observable<T> \| Observable<T>`              | A function returning an `Observable` of the data to be loaded, or a plain Observable.                                        |
+| `@Input('ngxLoadWithArgs') args: unknown`                                              | An argument to be passed to the `ngxLoadWith` function (if it's a function). Changes to this argument will trigger a reload. |
+| `@Input('ngxLoadWithLoadingTemplate') loadingTemplate: TemplateRef<unknown>`           | An optional template to be displayed while the data is being loaded.                                                         |
+| `@Input('ngxLoadWithErrorTemplate') errorTemplate: TemplateRef< ErrorTemplateContext>` | An optional template to be displayed when an error occurs while loading the data.                                            |
+| `@Input('ngxLoadWithDebounceTime') debounceTime: number`                               | The amount of time in milliseconds to debounce the load trigger.                                                             |
+| `@Input('ngxLoadWithStaleData') staleData: boolean`                                    | A boolean indicating whether to show previously loaded data while reloading.                                                 |
 
 ### Outputs
 
@@ -266,15 +283,15 @@ interface ErrorTemplateContext {
 
 ## FAQ
 
-### Why does the directive only accept a function that returns an observable instead of just the observable?
+### Why use a function returning an Observable instead of a direct Observable?
 
-The design choice to accept a function that returns an Observable (instead of directly accepting the Observable) was made to allow for the passing of dynamic arguments via the `[ngxLoadWithArgs]` input.
+The choice of accepting a function returning an Observable, instead of just an Observable, stems from the ability to pass dynamic arguments using the `[ngxLoadWithArgs]` input.
 
-This choice greatly simplifies scenarios where you need to react to changing arguments. For instance, in cases where your data loading operation depends on the route parameters, changes to these parameters would require a reload of the data. By accepting a function that returns an Observable, `ngx-load-with` automatically manages this reloading process whenever the arguments change.
+This design simplifies scenarios where the data fetching depends on changing parameters. For example, when the data load is tied to route parameters, any change in these parameters necessitates data reloading. `ngx-load-with` automatically manages this process by reacting to the changes in these arguments.
 
-An example of this use case is demonstrated in the ["Fetching data using route parameters"](#fetching-data-using-route-parameters) section, where the route parameters are passed as arguments to the `getTodo` function. Here, any changes to the route parameters trigger a reload of the data.
+A relevant example is found in the ["Loading based on dynamic arguments"](#loading-based-on-dynamic-arguments) section. Here, route parameters are passed as arguments to the `getTodo` function, and any alteration in these parameters triggers a data reload.
 
-This approach saves you from the hassle of having to manually pipe your route parameters to a `switchMap` operator, which then triggers your data loading function:
+Without `ngx-load-with`, you would manually pipe your route parameters through a `switchMap` operator to trigger the data fetching function:
 
 ```typescript
 this.route.params.pipe(
@@ -286,7 +303,7 @@ this.route.params.pipe(
         // etc.
 ```
 
-With `ngx-load-with`, all of this logic is handled for you automatically. This provides a cleaner, more intuitive solution that makes your code easier to understand and maintain.
+`ngx-load-with` automates this logic, leading to cleaner and more intuitive code that's easier to understand and maintain.
 
 ## License
 

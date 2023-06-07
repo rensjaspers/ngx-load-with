@@ -67,28 +67,26 @@ type loadingPhaseHandlers<T> = {
   [K in LoadingPhase]: (state: LoadingState<T>) => void;
 };
 
+type LoadFn<T> = (args?: any) => Observable<T>;
+
 /**
- * The NgxLoadWithDirective is an Angular directive that provides an easier way to handle
- * asynchronous data loading within components. It allows for the injection of templates
- * for different loading states, which includes 'loading', 'loaded', and 'error'.
+ * The NgxLoadWithDirective is an Angular directive for managing asynchronous data loading in components.
+ * It provides interfaces for specifying templates corresponding to various loading states - 'loading',
+ * 'loaded', and 'error'.
  *
- * The directive accepts a load function that returns an Observable of data to be loaded.
- * It also accepts optional arguments that can be passed to this load function. Any changes
- * to these arguments trigger a reload of the data. The directive also allows for the
- * injection of different templates to be displayed for each of these states.
+ * The directive can accept either a load function returning an Observable, or a plain Observable directly.
+ * If a function is provided, it may optionally accept arguments, triggering a data reload on any changes to these arguments.
  *
- * The following are the main features of the directive:
+ * The directive allows for injecting custom templates for each loading state, enhancing the flexibility of UI design.
  *
- * - Handles the UI state transitions between 'loading', 'loaded', and 'error' states.
- * - Accepts a custom function for loading the data that returns an Observable.
- * - Allows for the injection of custom templates for 'loading', 'loaded', and 'error' states.
- * - Emits different events based on the loading state, including 'loadStart', 'loadSuccess',
- *   'loadError', and 'loadFinish'.
- * - Allows the user to control the debounce time for the loading function.
- * - Supports the use of stale data during reloading.
+ * Key features of the directive:
  *
- * This directive helps in creating a responsive and informative UI during data loading processes
- * and provides better control and customization of this asynchronous process.
+ * - Handling UI state transitions: 'loading', 'loaded', and 'error'.
+ * - Acceptance of either a custom function returning an Observable or a plain Observable for data loading.
+ * - Injection of custom templates for 'loading', 'loaded', and 'error' states.
+ * - Emission of events corresponding to the loading state: 'loadStart', 'loadSuccess', 'loadError', and 'loadFinish'.
+ * - User-defined debounce time for the loading function.
+ * - Ability to display previously loaded data while reloading.
  */
 @Directive({
   selector: '[ngxLoadWith]',
@@ -98,12 +96,19 @@ export class NgxLoadWithDirective<T = unknown>
   implements OnInit, OnChanges, OnDestroy
 {
   /**
-   * A function that returns an Observable of the data to be loaded. The function can optionally take an argument of any type.
-   * The Observable should emit the data to be loaded, and complete when the data has been fully loaded.
-   * If an error occurs while loading the data, the Observable should emit an error.
+   * This input accepts either a function returning an Observable of data to be loaded, or a plain Observable.
+   * If a function is provided, it can take optional arguments. Any changes in these arguments trigger a data reload.
+   * Directly passing a plain Observable is also supported, but note that in such cases, using the `ngxLoadWithArgs` input
+   * for passing arguments to the `loadFn` function is not possible, as there's no mechanism to pass arguments to a plain Observable.
    */
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  @Input('ngxLoadWith') loadFn!: (args?: any) => Observable<T>;
+  @Input('ngxLoadWith') set ngxLoadWith(value: LoadFn<T> | Observable<T>) {
+    if (value instanceof Observable) {
+      this.loadFn = () => value;
+    } else {
+      this.loadFn = value;
+    }
+  }
 
   /**
    * An optional argument to be passed to the `loadFn` function. Changes to this argument will trigger a reload.
@@ -165,6 +170,7 @@ export class NgxLoadWithDirective<T = unknown>
    */
   @Output() loadingStateChange = new EventEmitter<LoadingState<T>>();
 
+  private loadFn!: LoadFn<T>;
   private loadedViewRef?: EmbeddedViewRef<LoadedTemplateContext<T>>;
   private loadingViewRef?: EmbeddedViewRef<unknown>;
 
