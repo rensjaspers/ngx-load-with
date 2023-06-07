@@ -79,7 +79,7 @@ export class MyComponent {
 }
 ```
 
-You can also pass a plain Observable:
+You can also pass a plain Observable ([live example](https://stackblitz.com/edit/stackblitz-starters-hygzxn?file=src%2Fmain.ts)):
 
 ```html
 <div *ngxLoadWith="todos$ as todo">{{todo.title}}</div>
@@ -88,9 +88,7 @@ You can also pass a plain Observable:
 ```typescript
 @Component({...})
 export class MyComponent {
-  todos$ = this.http.get<Todo[]>('api/todos');
-
-  private http = inject(HttpClient);
+  todos$ = inject(HttpClient).get<Todo[]>('api/todos');
 }
 ```
 
