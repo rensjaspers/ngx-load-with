@@ -49,14 +49,14 @@ Follow our guide below to start using `NgxLoadWith` in your Angular project.
 
 ## Demo
 
-Check out these live examples of `ngx-load-with` in action:
+Check out these live examples of `NgxLoadWith` in action:
 
-- ⚡️ [Basic Usage Example](https://stackblitz.com/edit/stackblitz-starters-ygxc6t?file=src%2Fmain.ts): Demonstrates the fundamental features of `ngx-load-with`, including loading and error templates.
-- ⚡️ [Advanced Usage Example](https://stackblitz.com/edit/angular-kkldgb-kldaa7?file=src%2Fapp%2Fapp.component.html): Showcases an e-commerce search operation using `ngx-load-with`, featuring debounce time and a persistent display of previous search results for enhanced user experience.
+- ⚡️ [Basic Usage Example](https://stackblitz.com/edit/stackblitz-starters-ygxc6t?file=src%2Fmain.ts): Demonstrates the fundamental features of `NgxLoadWith` , including loading and error templates.
+- ⚡️ [Advanced Usage Example](https://stackblitz.com/edit/angular-kkldgb-kldaa7?file=src%2Fapp%2Fapp.component.html): Showcases an e-commerce search operation using `NgxLoadWith`, featuring debounce time and a persistent display of previous search results for enhanced user experience.
 
 ## Installation
 
-To install `ngx-load-with`, run the following command:
+To install `NgxLoadWith`, run the following command:
 
 ```bash
 npm install ngx-load-with
@@ -64,7 +64,7 @@ npm install ngx-load-with
 
 > Note: you need Angular version 15 or higher.
 
-To use `ngx-load-with`, import the `NgxLoadWithModule` module in your Angular module:
+To use `NgxLoadWith`, import the `NgxLoadWithModule` module in your Angular module:
 
 ```typescript
 import { NgxLoadWithModule } from "ngx-load-with";
@@ -111,7 +111,7 @@ Display a loading message while data is being loaded, and an error message if an
 
 ### Loading based on dynamic arguments
 
-When using dynamic arguments with `ngx-load-with`, you will pass a function that takes these arguments and returns an Observable, instead of directly passing a plain Observable. This function allows `ngx-load-with` to automatically manage the reloading process when these dynamic arguments change, leading to cleaner and more efficient code. Learn more about this in the [FAQ](#how-do-dynamic-arguments-enhance-ngx-load-with) section.
+When using dynamic arguments with `NgxLoadWith`, you will pass a function that takes these arguments and returns an Observable, instead of directly passing a plain Observable. This function allows `NgxLoadWith` to automatically manage the reloading process when these dynamic arguments change, leading to cleaner and more efficient code. Learn more about this in the [FAQ](#how-do-dynamic-arguments-enhance-ngx-load-with) section.
 
 The following examples illustrate how to fetch data using route parameters and based on user input.
 
@@ -283,15 +283,15 @@ interface ErrorTemplateContext {
 
 ## FAQ
 
-### How do dynamic arguments enhance ngx-load-with?
+### How do dynamic arguments enhance NgxLoadWith?
 
-Dynamic arguments play a significant role in the design and usage of ngx-load-with. By accepting a function that returns an Observable, and allowing the passage of dynamic arguments through the [ngxLoadWithArgs] input, ngx-load-with provides a powerful and flexible tool to handle complex data fetching scenarios.
+Dynamic arguments play a significant role in the design and usage of `NgxLoadWith`. By accepting a function that returns an Observable, and allowing the passage of dynamic arguments through the [ngxLoadWithArgs] input, `NgxLoadWith` provides a powerful and flexible tool to handle complex data fetching scenarios.
 
-Consider a situation where your data loading operation depends on changing parameters, such as route parameters. Whenever these parameters change, a reload of data becomes necessary. ngx-load-with caters to this requirement automatically by listening to the argument changes and triggering the appropriate data fetching function.
+Consider a situation where your data loading operation depends on changing parameters, such as route parameters. Whenever these parameters change, a reload of data becomes necessary. `NgxLoadWith` caters to this requirement automatically by listening to the argument changes and triggering the appropriate data fetching function.
 
 A relevant example is found in the ["Loading based on dynamic arguments"](#loading-based-on-dynamic-arguments) section. Here, route parameters are passed as arguments to the `getTodo` function, and any alteration in these parameters triggers a data reload.
 
-Without `ngx-load-with`, you would manually pipe your route parameters through a `switchMap` operator to trigger the data fetching function:
+Without `NgxLoadWith` you would manually pipe your route parameters through a `switchMap` operator to trigger the data fetching function:
 
 ```typescript
 this.route.params.pipe(
@@ -303,11 +303,11 @@ this.route.params.pipe(
         // etc.
 ```
 
-`ngx-load-with` automates this logic, leading to cleaner and more intuitive code that's easier to understand and maintain.
+`NgxLoadWith` automates this logic, leading to cleaner and more intuitive code that's easier to understand and maintain.
 
 ## License
 
-`ngx-load-with` is licensed under the MIT License. See the [LICENSE](https://github.com/rensjaspers/ngx-load-with/blob/main/LICENSE) file for details.
+`NgxLoadWith` is licensed under the MIT License. See the [LICENSE](https://github.com/rensjaspers/ngx-load-with/blob/main/LICENSE) file for details.
 
 ## Contributing
 
