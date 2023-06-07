@@ -26,7 +26,7 @@ import { NgxLoadWithDirective } from './ngx-load-with.directive';
     <button id="load" (click)="loader.load()"></button>
     <ng-template
       #loader="ngxLoadWith"
-      [ngxLoadWith]="loadFn"
+      [ngxLoadWith]="loadWith"
       [ngxLoadWithArgs]="args"
       [ngxLoadWithLoadingTemplate]="loading"
       [ngxLoadWithErrorTemplate]="error"
@@ -50,7 +50,7 @@ class TestComponent {
   args?: unknown;
 
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any,@typescript-eslint/no-unused-vars
-  loadFn = (_args: any) => of('test' as any);
+  loadWith: any = (_args: any) => of('test' as any);
 }
 
 describe('NgxLoadWithDirective', () => {
@@ -75,7 +75,7 @@ describe('NgxLoadWithDirective', () => {
   }));
 
   it('should display the loading template while data is being loaded', fakeAsync(() => {
-    component.loadFn = () => of('test').pipe(delay(1000));
+    component.loadWith = () => of('test').pipe(delay(1000));
 
     fixture.detectChanges();
     expect(getTextContent()).toEqual('loading');
@@ -87,7 +87,7 @@ describe('NgxLoadWithDirective', () => {
   }));
 
   it('should render the loading template only once during multiple consecutive loading states', fakeAsync(() => {
-    component.loadFn = () => of('test').pipe(delay(1000));
+    component.loadWith = () => of('test').pipe(delay(1000));
     fixture.detectChanges();
 
     const renderSpy = spyOn(
@@ -111,7 +111,7 @@ describe('NgxLoadWithDirective', () => {
   }));
 
   it('should display the error template when an error occurs', fakeAsync(() => {
-    component.loadFn = () => throwError(() => new Error('An error occurred'));
+    component.loadWith = () => throwError(() => new Error('An error occurred'));
 
     fixture.detectChanges();
     tick();
@@ -122,7 +122,7 @@ describe('NgxLoadWithDirective', () => {
 
   it('should retry loading when retry is called', fakeAsync(() => {
     let counter = 0;
-    component.loadFn = () => {
+    component.loadWith = () => {
       counter++;
       if (counter === 1) {
         return throwError(() => new Error('An error occurred'));
@@ -151,7 +151,7 @@ describe('NgxLoadWithDirective', () => {
 
   it('should debounce the loading function', fakeAsync(() => {
     let counter = 0;
-    component.loadFn = () => {
+    component.loadWith = () => {
       counter++;
       return timer(1000).pipe(map(() => 'test' + counter));
     };
@@ -172,7 +172,7 @@ describe('NgxLoadWithDirective', () => {
 
   it('should display the stale data while reloading', fakeAsync(() => {
     let counter = 0;
-    component.loadFn = () => {
+    component.loadWith = () => {
       counter++;
       return timer(1000).pipe(map(() => 'test' + counter));
     };
@@ -200,7 +200,7 @@ describe('NgxLoadWithDirective', () => {
   }));
 
   it('should trigger a reload when args change', fakeAsync(() => {
-    component.loadFn = (args: any) => of(args);
+    component.loadWith = (args: any) => of(args);
     component.args = 'test1';
     fixture.detectChanges();
     tick();
@@ -216,7 +216,7 @@ describe('NgxLoadWithDirective', () => {
   }));
 
   it('should handle multiple emissions', fakeAsync(() => {
-    component.loadFn = () =>
+    component.loadWith = () =>
       interval(1000).pipe(map((count) => 'test' + count));
 
     fixture.detectChanges();
@@ -260,7 +260,7 @@ describe('NgxLoadWithDirective', () => {
 
   it('it should stop loadFn emissions when setData or setError is called', fakeAsync(() => {
     let counter = 0;
-    component.loadFn = () => {
+    component.loadWith = () => {
       counter++;
       return timer(1000).pipe(map(() => 'test' + counter));
     };
@@ -304,7 +304,7 @@ describe('NgxLoadWithDirective', () => {
   it('should clean up when the directive is destroyed', fakeAsync(() => {
     let cleanedUp = false;
 
-    component.loadFn = () =>
+    component.loadWith = () =>
       new Observable((observer) => {
         // Start emitting values
         const intervalId = setInterval(() => observer.next('test'), 1000);
@@ -349,7 +349,7 @@ describe('NgxLoadWithDirective', () => {
   }));
 
   it('should call loadError when an error occurs', fakeAsync(() => {
-    component.loadFn = () => throwError(() => new Error('An error occurred'));
+    component.loadWith = () => throwError(() => new Error('An error occurred'));
     fixture.detectChanges();
     spyOn(component.loader.loadError, 'emit');
     fixture.detectChanges();
@@ -366,5 +366,14 @@ describe('NgxLoadWithDirective', () => {
     tick();
     fixture.detectChanges();
     expect(spy).toHaveBeenCalled();
+  }));
+
+  it('should accept a plain observable to load', fakeAsync(() => {
+    const plainObservable = of('plain');
+    component.loadWith = plainObservable;
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('plain');
   }));
 });
