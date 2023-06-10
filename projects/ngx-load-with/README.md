@@ -15,7 +15,7 @@ Welcome to `NgxLoadWith`, a powerful tool for Observable-based data loading in A
 <!-- Output: You have 0 unread messages -->
 ```
 
-`NgxLoadWith` simplifies handling `Observable` data and managing loading states in your Angular templates. By using the `*ngxLoadWith` structural directive, you can bind an Observable data source and manage how this data is displayed in your templates, without needing to manually handle different loading states with `*ngIf`.
+With the `*ngxLoadWith` directive, you can easily display data from an Observable in your template. You won’t have to worry about performance, errors, or managing the loading state. Plus, it lets you handle reloading and more advanced tasks, all with minimal RxJS knowledge.
 
 **Key features:**
 
