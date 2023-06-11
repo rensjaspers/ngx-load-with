@@ -283,9 +283,9 @@ interface ErrorTemplateContext {
 
 ## FAQ
 
-### Understanding Dynamic Arguments
+### How do dynamic arguments work in NgxLoadWith?
 
-Dynamic arguments are important when using `NgxLoadWith`. They let `NgxLoadWith` accept a function that gives back an Observable and allow you to use the [ngxLoadWithArgs] input for sending dynamic arguments. This makes `NgxLoadWith` very handy when handling complex situations of fetching data.
+Dynamic arguments are important when using `NgxLoadWith`. They let `NgxLoadWith` accept a function that gives back an Observable and allow you to use the `args` input for sending dynamic arguments. This makes `NgxLoadWith` very handy when handling complex situations of fetching data.
 
 Imagine you have a situation where your data loading depends on certain variables like route parameters. When these variables change, you need to load the data again. `NgxLoadWith` does this job for you automatically. It notices changes in arguments and starts the right data fetching function.
 
