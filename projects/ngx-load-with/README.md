@@ -42,7 +42,6 @@ Follow our guide below to start using `NgxLoadWith` in your Angular project.
   - [Reloading while continuing to show stale data](#reloading-while-continuing-to-show-stale-data)
 - [Note on Microsyntax](#note-on-microsyntax)
 - [API](#api)
-- [FAQ](#faq)
 - [License](#license)
 - [Contributing](#contributing)
 - [Credits](#credits)
@@ -111,7 +110,7 @@ Display a loading message while data is being loaded, and an error message if an
 
 ### Loading based on dynamic arguments
 
-When using dynamic arguments with `NgxLoadWith`, you will pass a function that takes these arguments and returns an Observable, instead of directly passing a plain Observable. This function allows `NgxLoadWith` to automatically manage the reloading process when these dynamic arguments change, leading to cleaner and more efficient code. Learn more about this in the [FAQ](#faq) section.
+When using dynamic arguments with `NgxLoadWith`, you will pass a function that takes these arguments and returns an Observable, instead of directly passing a plain Observable. This function allows `NgxLoadWith` to automatically manage the reloading process when these dynamic arguments change, leading to cleaner and more efficient code. 
 
 The following examples illustrate how to fetch data using route parameters and based on user input.
 
@@ -280,30 +279,6 @@ interface ErrorTemplateContext {
   retry: () => void;
 }
 ```
-
-## FAQ
-
-### How do dynamic arguments work in NgxLoadWith?
-
-Dynamic arguments are important when using `NgxLoadWith`. They let `NgxLoadWith` accept a function that gives back an Observable and allow you to use the `args` input for sending dynamic arguments. This makes `NgxLoadWith` very handy when handling complex situations of fetching data.
-
-Imagine you have a situation where your data loading depends on certain variables like route parameters. When these variables change, you need to load the data again. `NgxLoadWith` does this job for you automatically. It notices changes in arguments and starts the right data fetching function.
-
-An example is given in the ["Loading based on dynamic arguments"](#loading-based-on-dynamic-arguments) section. Here, route parameters are given as arguments to the `getTodo` function. If these parameters change, it prompts a data reload.
-
-Without `NgxLoadWith`, you would have to manually control your route parameters with a `switchMap` operator to start the data fetching function:
-
-```typescript
-this.route.params.pipe(
-  switchMap((params) =>
-    concat(
-      of({ loading: true }),
-      this.getData(params).pipe(
-        map((data) => ({ data, loading: false }))
-        // etc.
-```
-
-But with `NgxLoadWith`, this process is automated, resulting in tidier code that's easier to understand and keep updated.
 
 ## License
 
