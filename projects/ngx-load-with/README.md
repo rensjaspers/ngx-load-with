@@ -26,10 +26,6 @@ With the `*ngxLoadWith` directive, you can easily display data from an Observabl
 - ⚡️ **Dynamic Data Loading:** Load data based on dynamic parameters like route parameters with just a basic understanding of RxJS.
 - 🎮 **Control Over Data Loading Process:** `NgxLoadWith` equips you with convenient methods for reloading and canceling requests.
 
-Embrace a cleaner, more efficient, and intuitive approach to data loading in Angular with `NgxLoadWith`.
-
-Follow our guide below to start using `NgxLoadWith` in your Angular project.
-
 ## Table of Contents
 
 - [Demo](#demo)
