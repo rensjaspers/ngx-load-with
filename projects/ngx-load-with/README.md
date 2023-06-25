@@ -80,13 +80,15 @@ Load data from an Observable and display it in your template:
 ⚡️ **[Live Example](https://stackblitz.com/edit/stackblitz-starters-hygzxn?file=src%2Fmain.ts)**
 
 ```html
-<div *ngxLoadWith="todo$ as todo">{{todo.title}}</div>
+<ul *ngxLoadWith="todos$ as todos; loadingTemplate: loading; errorTemplate: error">
+  <li *ngFor="let todo of todos">{{todo.title}}</li>
+</ul>
 ```
 
 ```typescript
 @Component({...})
 export class MyComponent {
-  todo$ = inject(HttpClient).get<Todo>('api/todo/1');
+  todo$ = inject(HttpClient).get<Todo[]>('api/todos');
 }
 ```
 
