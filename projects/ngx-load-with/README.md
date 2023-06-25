@@ -88,7 +88,7 @@ Load data from an Observable and display it in your template:
 ```typescript
 @Component({...})
 export class MyComponent {
-  todo$ = inject(HttpClient).get<Todo[]>('api/todos');
+  todos$ = inject(HttpClient).get<Todo[]>('api/todos');
 }
 ```
 
