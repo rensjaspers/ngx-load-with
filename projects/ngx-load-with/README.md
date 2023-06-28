@@ -80,7 +80,7 @@ Load data from an Observable and display it in your template:
 ⚡️ **[Live Example](https://stackblitz.com/edit/stackblitz-starters-hygzxn?file=src%2Fmain.ts)**
 
 ```html
-<ul *ngxLoadWith="todos$ as todos; loadingTemplate: loading; errorTemplate: error">
+<ul *ngxLoadWith="todos$ as todos">
   <li *ngFor="let todo of todos">{{todo.title}}</li>
 </ul>
 ```
