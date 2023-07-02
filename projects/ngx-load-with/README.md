@@ -57,7 +57,7 @@ To install `NgxLoadWith`, run the following command:
 npm install ngx-load-with
 ```
 
-> Note: you need Angular version 15 or higher.
+> Note: you need Angular version 16 or higher. For Angular 15, use `ngx-load-with@1`.
 
 To use `NgxLoadWith`, import the `NgxLoadWithModule` module in your Angular module:
 
@@ -108,7 +108,7 @@ Display a loading message while data is being loaded, and an error message if an
 
 ### Loading based on dynamic arguments
 
-When using dynamic arguments with `NgxLoadWith`, you will pass a function that takes these arguments and returns an Observable, instead of directly passing a plain Observable. This function allows `NgxLoadWith` to automatically manage the reloading process when these dynamic arguments change, leading to cleaner and more efficient code. 
+When using dynamic arguments with `NgxLoadWith`, you will pass a function that takes these arguments and returns an Observable, instead of directly passing a plain Observable. This function allows `NgxLoadWith` to automatically manage the reloading process when these dynamic arguments change, leading to cleaner and more efficient code.
 
 The following examples illustrate how to fetch data using route parameters and based on user input.
 
