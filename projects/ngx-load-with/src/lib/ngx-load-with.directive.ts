@@ -102,7 +102,9 @@ export class NgxLoadWithDirective<T = unknown>
    * Directly passing a plain Observable is also supported, but note that in such cases, using the `ngxLoadWithArgs` input
    * for passing arguments to the `loadFn` function is not possible, as there's no mechanism to pass arguments to a plain Observable.
    */
-  @Input('ngxLoadWith') set ngxLoadWith(value: LoadFn<T> | Observable<T>) {
+  @Input({ alias: 'ngxLoadWith', required: true }) set ngxLoadWith(
+    value: LoadFn<T> | Observable<T>
+  ) {
     if (value instanceof Observable) {
       this.loadFn = () => value;
     } else {
