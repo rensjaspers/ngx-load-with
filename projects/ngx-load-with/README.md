@@ -32,10 +32,10 @@ With the `*ngxLoadWith` directive, you can easily display data from an Observabl
 - [Installation](#installation)
 - [Usage](#usage)
   - [Basic usage](#basic-usage)
-  - [Loading and error templates](#loading-and-error-templates)
-  - [Loading based on dynamic arguments](#loading-based-on-dynamic-arguments)
-  - [Reloading data](#reloading-data)
-  - [Reloading while continuing to show stale data](#reloading-while-continuing-to-show-stale-data)
+  - [Showing loading and error templates](#showing-loading-and-error-templates)
+  - [Loading based on changes to other data](#loading-based-on-changes-to-other-data)
+  - [Reloading](#reloading)
+  - [Showing previously loaded data while reloading](#showing-previously-loaded-data-while-reloading)
 - [Note on Microsyntax](#note-on-microsyntax)
 - [API](#api)
 - [License](#license)
@@ -92,7 +92,7 @@ export class MyComponent {
 }
 ```
 
-### Loading and error templates
+### Showing loading and error templates
 
 Display a loading message while data is being loaded, and an error message if an error occurs:
 
@@ -106,11 +106,11 @@ Display a loading message while data is being loaded, and an error message if an
 <ng-template #error let-error>{{error.message}}</ng-template>
 ```
 
-### Loading based on dynamic arguments
+### Loading based on changes to other data
 
-When using dynamic arguments with `NgxLoadWith`, you will pass a function that takes these arguments and returns an Observable, instead of directly passing a plain Observable. This function allows `NgxLoadWith` to automatically manage the reloading process when these dynamic arguments change, leading to cleaner and more efficient code.
+In many cases, you need to load data based on other data that frequently changes. For example, you may want to load data based on the ID in the route parameters or keywords entered in a search bar. It is crucial to automatically reload the data when these changes occur.
 
-The following examples illustrate how to fetch data using route parameters and based on user input.
+With `NgxLoadWith`, you can easily handle this scenario by passing arguments to the `*ngxLoadWith` directive. Instead of directly passing a plain Observable, you pass a function that takes these arguments and returns an Observable. This enables `NgxLoadWith` to automatically manage the reloading process when the arguments change.
 
 **Fetching data using route parameters:**
 
@@ -151,7 +151,7 @@ export class MyComponent {
 }
 ```
 
-### Reloading data
+### Reloading
 
 Reload data when a button is clicked:
 
@@ -169,7 +169,7 @@ Reload data when a button is clicked:
 
 > **Important:** If you plan to use the `NgxLoadWithDirective.load` method in your template, please note that you cannot use the `*ngxLoadWith` microsyntax. See [note on microsyntax](#note-on-microsyntax) for more details.
 
-### Reloading while continuing to show stale data
+### Showing previously loaded data while reloading
 
 Reload data when a button is clicked, but display stale data while the new data is being loaded:
 
