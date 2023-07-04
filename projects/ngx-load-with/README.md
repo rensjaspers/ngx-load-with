@@ -38,6 +38,9 @@ With the `*ngxLoadWith` directive, you can easily display data from an Observabl
   - [Showing previously loaded data while reloading](#showing-previously-loaded-data-while-reloading)
 - [Note on Microsyntax](#note-on-microsyntax)
 - [API](#api)
+  - [Inputs](#inputs)
+  - [Outputs](#outputs)
+  - [Methods](#methods)
 - [License](#license)
 - [Contributing](#contributing)
 - [Credits](#credits)
@@ -224,35 +227,31 @@ When using the `NgxLoadWithDirective`, you have two options for syntax:
 
 ### Inputs
 
-| Name                                                                                   | Description                                                                                                                  |
-| -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `@Input('ngxLoadWith') ngxLoadWith: (args?: any) => Observable<T> \| Observable<T>`    | A function returning an `Observable` of the data to be loaded, or a plain Observable.                                        |
-| `@Input('ngxLoadWithArgs') args: unknown`                                              | An argument to be passed to the `ngxLoadWith` function (if it's a function). Changes to this argument will trigger a reload. |
-| `@Input('ngxLoadWithLoadingTemplate') loadingTemplate: TemplateRef<unknown>`           | An optional template to be displayed while the data is being loaded.                                                         |
-| `@Input('ngxLoadWithErrorTemplate') errorTemplate: TemplateRef< ErrorTemplateContext>` | An optional template to be displayed when an error occurs while loading the data.                                            |
-| `@Input('ngxLoadWithDebounceTime') debounceTime: number`                               | The amount of time in milliseconds to debounce the load trigger.                                                             |
-| `@Input('ngxLoadWithStaleData') staleData: boolean`                                    | A boolean indicating whether to show previously loaded data while reloading.                                                 |
+- `ngxLoadWith: (args?: any) => Observable<T> | Observable<T>`: A function returning an Observable of the data to be loaded, or a plain Observable.
+- `args: unknown`: An argument to be passed to the `ngxLoadWith` function (if it's a function). Changes to this argument will trigger a reload.
+- `loadingTemplate: TemplateRef<unknown>`: An optional template to be displayed while the data is being loaded.
+- `errorTemplate: TemplateRef<ErrorTemplateContext>`: An optional template to be displayed when an error occurs while loading the data.
+- `debounceTime: number`: The amount of time in milliseconds to debounce the load trigger.
+- `staleData: boolean`: A boolean indicating whether to show previously loaded data while reloading.
 
 ### Outputs
 
-| Name                                                          | Description                                                                     |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `@Output() loadStart: EventEmitter<void>`                     | Emits when the data loading process starts.                                     |
-| `@Output() loadSuccess: EventEmitter<T>`                      | Emits when the data loading process is successful.                              |
-| `@Output() loadError: EventEmitter<Error>`                    | Emits when an error occurs while loading the data.                              |
-| `@Output() loadFinish: EventEmitter<void>`                    | Emits when the data loading process finishes, regardless of success or failure. |
-| `@Output() loadingStateChange: EventEmitter<LoadingState<T>>` | Emits when the loading state changes.                                           |
+- `loadStart: EventEmitter<void>`: Emits when the data loading process starts.
+- `loadSuccess: EventEmitter<T>`: Emits when the data loading process is successful.
+- `loadError: EventEmitter<Error>`: Emits when an error occurs while loading the data.
+- `loadFinish: EventEmitter<void>`: Emits when the data loading process finishes, regardless of success or failure.
+- `loadingStateChange: EventEmitter<LoadingState<T>>`: Emits when the loading state changes.
 
 > **Important:** If you plan to listen to the above output events, please note that you cannot use the `*ngxLoadWith` microsyntax. See [note on microsyntax](#note-on-microsyntax) for more details on using the normal syntax.
 
 ### Methods
 
-| Name                     | Description                                                                                     |
-| ------------------------ | ----------------------------------------------------------------------------------------------- |
-| `load()`                 | Triggers a reload of the data. Previous load requests are cancelled.                            |
-| `cancel()`               | Cancels any pending load requests.                                                              |
-| `setData(data: T)`       | Updates the loading state as if the passed data were loaded through the `ngxLoadWith` function. |
-| `setError(error: Error)` | Updates the loading state as if the passed error were thrown by the `ngxLoadWith` function.     |
+- `load()`: Triggers a reload of the data. Previous load requests are cancelled.
+- `cancel()`: Cancels any pending load requests.
+- `setData(data: T)`: Updates the loading state as if the passed data were loaded through the `ngxLoadWith` function.
+- `setError(error: Error)`: Updates the loading state as if the passed error were thrown by the `ngxLoadWith` function.
+
+Let me know if there's anything else I can assist you with!
 
 > **Important:** If you plan to use the above methods in your template, please note that you cannot use the `*ngxLoadWith` microsyntax. See [note on microsyntax](#note-on-microsyntax) for more details on using the normal syntax.
 
