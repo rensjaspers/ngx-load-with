@@ -111,13 +111,9 @@ Display a loading message while data is being loaded, and an error message if an
 
 ### Loading based on changes to other data
 
-In many cases, you need to load data based on other data that frequently changes. For example, you may want to load data based on the ID in the route parameters or keywords entered in a search bar. It is crucial to automatically reload the data when these changes occur.
+`NgxLoadWith` can respond to dynamic data changes using a function in place of a plain Observable. This function is invoked when the input arguments change.
 
-With `NgxLoadWith`, you can easily handle this scenario by passing arguments to the `*ngxLoadWith` directive. Instead of directly passing a plain Observable, you pass a function that takes these arguments and returns an Observable. This enables `NgxLoadWith` to automatically manage the reloading process when the arguments change.
-
-**Fetching data using route parameters:**
-
-⚡️ **[Live Example](https://stackblitz.com/edit/stackblitz-starters-srzpra?file=src%2Fdata%2Fdata.component.ts)**
+**Example 1: Fetching data using route parameters:**
 
 ```html
 <div *ngxLoadWith="getTodo as todo; args: routeParams$ | async">{{todo.title}}</div>
@@ -134,9 +130,7 @@ export class MyComponent {
 }
 ```
 
-**Searching data: fetch data based on user input:**
-
-⚡️ **[Live Example](https://stackblitz.com/edit/angular-kkldgb-kldaa7?file=src%2Fapp%2Fapp.component.html)**
+**Example 2: Searching data based on user input:**
 
 ```html
 <input ngModel #searchbox />
@@ -153,6 +147,8 @@ export class MyComponent {
   private http = inject(HttpClient);
 }
 ```
+
+In these examples, `getTodo` and `findTodos` are functions that return Observables based on dynamic parameters. When these parameters change, `NgxLoadWith` automatically invokes the respective function with the updated parameters, effectively reloading the data.
 
 ### Reloading
 
