@@ -247,8 +247,6 @@ When using the `NgxLoadWithDirective`, you have two options for syntax:
 - `setData(data: T)`: Updates the loading state as if the passed data were loaded through the `ngxLoadWith` function.
 - `setError(error: Error)`: Updates the loading state as if the passed error were thrown by the `ngxLoadWith` function.
 
-Let me know if there's anything else I can assist you with!
-
 > **Important:** If you plan to use the above methods in your template, please note that you cannot use the `*ngxLoadWith` microsyntax. See [note on microsyntax](#note-on-microsyntax) for more details on using the normal syntax.
 
 ### Interfaces
