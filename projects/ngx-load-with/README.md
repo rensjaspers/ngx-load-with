@@ -49,8 +49,8 @@ With the `*ngxLoadWith` directive, you can easily display data from an Observabl
 
 Check out these live examples of `NgxLoadWith` in action:
 
-- ⚡️ [Basic Usage Example](https://stackblitz.com/edit/stackblitz-starters-ygxc6t?file=src%2Fmain.ts): Demonstrates the fundamental features of `NgxLoadWith` , including loading and error templates.
-- ⚡️ [Advanced Usage Example](https://stackblitz.com/edit/angular-kkldgb-kldaa7?file=src%2Fapp%2Fapp.component.html): Showcases an e-commerce search operation using `NgxLoadWith`, featuring debounce time and a persistent display of previous search results for enhanced user experience.
+- ⚡️ [Basic Usage Example](https://stackblitz.com/edit/stackblitz-starters-ygxc6t?file=src%2Fmain.ts): Easily load data and show loading and error templates.
+- ⚡️ [Advanced Usage Example](https://stackblitz.com/edit/angular-kkldgb-kldaa7?file=src%2Fapp%2Fapp.component.html): Load data based to changes in a searchbar.
 
 ## Installation
 
