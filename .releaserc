@@ -9,7 +9,7 @@
       "@semantic-release/npm",
       {
         "npmPublish": true,
-        "pkgRoot": "projects/ngx-load-with"
+        "pkgRoot": "dist/ngx-load-with"
       }
     ],
     "@semantic-release/github"
