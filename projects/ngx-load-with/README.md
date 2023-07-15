@@ -2,7 +2,7 @@
 
 Welcome to `NgxLoadWith`, a powerful tool for Observable-based data loading in Angular.
 
-[![Build status](https://img.shields.io/github/actions/workflow/status/rensjaspers/ngx-load-with/test.yml?branch=main)](https://github.com/rensjaspers/ngx-load-with/actions/workflows/test.yml)
+[![Build status](https://img.shields.io/github/actions/workflow/status/rensjaspers/ngx-load-with/ci.yml?branch=main)](https://github.com/rensjaspers/ngx-load-with/actions/workflows/ci.yml)
 [![NPM version](https://img.shields.io/npm/v/ngx-load-with.svg)](https://www.npmjs.com/package/ngx-load-with)
 [![NPM downloads](https://img.shields.io/npm/dm/ngx-load-with.svg)](https://www.npmjs.com/package/ngx-load-with)
 [![MIT license](https://img.shields.io/github/license/rensjaspers/ngx-load-with)](https://github.com/rensjaspers/ngx-load-with/blob/main/LICENSE)
