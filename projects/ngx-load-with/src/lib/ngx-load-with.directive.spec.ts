@@ -427,4 +427,34 @@ describe('NgxLoadWithDirective', () => {
     fixture.detectChanges();
     expect(getTextContent()).toEqual('plain');
   }));
+
+  it('should re-render the loading template when the loadingTemplate input changes', fakeAsync(() => {
+    component.loadWith = () => of('test').pipe(delay(1000));
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('loading');
+
+    // Update the loading template
+    component.showAlternativeTemplates = true;
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('loading alt');
+
+    tick(1000);
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('test');
+  }));
+
+  it('should re-render the error template when the errorTemplate input changes', fakeAsync(() => {
+    component.loadWith = () => throwError(() => new Error('An error occurred'));
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('An error occurred');
+
+    // Update the error template
+    component.showAlternativeTemplates = true;
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('error alt');
+  }));
 });
