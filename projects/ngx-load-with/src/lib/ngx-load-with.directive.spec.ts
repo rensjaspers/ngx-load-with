@@ -28,8 +28,12 @@ import { NgxLoadWithDirective } from './ngx-load-with.directive';
       #loader="ngxLoadWith"
       [ngxLoadWith]="loadWith"
       [ngxLoadWithArgs]="args"
-      [ngxLoadWithLoadingTemplate]="loading"
-      [ngxLoadWithErrorTemplate]="error"
+      [ngxLoadWithLoadingTemplate]="
+        showAlternativeTemplates ? alternativeLoading : loading
+      "
+      [ngxLoadWithErrorTemplate]="
+        showAlternativeTemplates ? alternativeError : error
+      "
       [ngxLoadWithDebounceTime]="debounceTime"
       [ngxLoadWithStaleData]="staleData"
       let-data
@@ -41,6 +45,8 @@ import { NgxLoadWithDirective } from './ngx-load-with.directive';
     <ng-template #error let-error let-retry="retry">
       {{ error.message }} <button id="retry" (click)="retry()"></button>
     </ng-template>
+    <ng-template #alternativeLoading>loading alt</ng-template>
+    <ng-template #alternativeError>error alt</ng-template>
   `,
 })
 class TestComponent {
@@ -48,6 +54,7 @@ class TestComponent {
   debounceTime?: number;
   staleData?: boolean;
   args?: unknown;
+  showAlternativeTemplates = false;
 
   // eslint-disable-next-line  @typescript-eslint/no-explicit-any,@typescript-eslint/no-unused-vars
   loadWith: any = (_args: any) => of('test' as any);
@@ -199,7 +206,21 @@ describe('NgxLoadWithDirective', () => {
     expect(getTextContent()).toEqual('test2');
   }));
 
-  it('should trigger a reload when args change', fakeAsync(() => {
+  it('should trigger a reload when ngxLoadWith changes', fakeAsync(() => {
+    component.loadWith = () => of('test1');
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('test1');
+
+    component.loadWith = () => of('test2');
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('test2');
+  }));
+
+  it('should trigger a reload when ngxLoadWithArgs changes', fakeAsync(() => {
     component.loadWith = (args: any) => of(args);
     component.args = 'test1';
     fixture.detectChanges();
@@ -211,8 +232,38 @@ describe('NgxLoadWithDirective', () => {
     fixture.detectChanges();
     tick();
     fixture.detectChanges();
-
     expect(getTextContent()).toEqual('test2');
+  }));
+
+  it('should not trigger a reload on input changes other than ngxLoadWith and ngxLoadWithArgs', fakeAsync(() => {
+    let loadWithCount = 0;
+
+    component.loadWith = (_args: any) => {
+      loadWithCount++;
+      return of('test');
+    };
+
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+
+    expect(getTextContent()).toEqual('test');
+    expect(loadWithCount).toEqual(1);
+
+    // Change inputs and expect no reload
+    component.staleData = true;
+    component.debounceTime = 1000;
+    // Change template inputs and expect no reload
+    component.showAlternativeTemplates = true;
+
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+
+    expect(getTextContent()).toEqual('test');
+    expect(loadWithCount).toEqual(1);
+
+    discardPeriodicTasks();
   }));
 
   it('should handle multiple emissions', fakeAsync(() => {
@@ -375,5 +426,35 @@ describe('NgxLoadWithDirective', () => {
     tick();
     fixture.detectChanges();
     expect(getTextContent()).toEqual('plain');
+  }));
+
+  it('should re-render the loading template when the loadingTemplate input changes', fakeAsync(() => {
+    component.loadWith = () => of('test').pipe(delay(1000));
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('loading');
+
+    // Update the loading template
+    component.showAlternativeTemplates = true;
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('loading alt');
+
+    tick(1000);
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('test');
+  }));
+
+  it('should re-render the error template when the errorTemplate input changes', fakeAsync(() => {
+    component.loadWith = () => throwError(() => new Error('An error occurred'));
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('An error occurred');
+
+    // Update the error template
+    component.showAlternativeTemplates = true;
+    fixture.detectChanges();
+    tick();
+    fixture.detectChanges();
+    expect(getTextContent()).toEqual('error alt');
   }));
 });
