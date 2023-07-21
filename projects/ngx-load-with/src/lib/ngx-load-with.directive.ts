@@ -193,6 +193,8 @@ export class NgxLoadWithDirective<T = unknown>
     loaded: false,
   };
 
+  private loadingStateSnapshot = this.initialLoadingState;
+
   private readonly loadingPhaseHandlers: loadingPhaseHandlers<T> = {
     loading: () => this.handleLoadingState(),
     loaded: (state) => this.handleLoadedState(state),
@@ -225,9 +227,9 @@ export class NgxLoadWithDirective<T = unknown>
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['ngxLoadWith'] || changes['args']) {
-      this.load();
-    }
+    this.handleReloadTriggeringChanges(changes);
+    this.handleTemplateChanges(changes, 'loadingTemplate', 'loading');
+    this.handleTemplateChanges(changes, 'errorTemplate', 'error');
   }
 
   ngOnDestroy(): void {
@@ -284,6 +286,7 @@ export class NgxLoadWithDirective<T = unknown>
   }
 
   private handleLoadingPhase(state: LoadingState<T>) {
+    this.loadingStateSnapshot = state;
     this.loadingStateChange.emit(state);
     const phase = this.getLoadingPhase(state);
     this.loadingPhaseHandlers[phase](state);
@@ -316,6 +319,10 @@ export class NgxLoadWithDirective<T = unknown>
     if (this.loadingViewRef) {
       return;
     }
+    this.renderLoadingTemplate();
+  }
+
+  private renderLoadingTemplate() {
     this.clearViewContainer();
     if (this.loadingTemplate) {
       this.loadingViewRef = this.viewContainer.createEmbeddedView(
@@ -344,6 +351,39 @@ export class NgxLoadWithDirective<T = unknown>
     this.viewContainer.clear();
     this.loadedViewRef = undefined;
     this.loadingViewRef = undefined;
+  }
+
+  // Input change management:
+
+  private handleTemplateChanges(
+    changes: SimpleChanges,
+    templateKey: 'loadingTemplate' | 'errorTemplate',
+    phase: LoadingPhase
+  ): void {
+    if (
+      changes[templateKey] &&
+      this.getLoadingPhase(this.loadingStateSnapshot) === phase
+    ) {
+      if (phase === 'loading') {
+        this.renderLoadingTemplate();
+      } else if (phase === 'error') {
+        this.handleErrorState(this.loadingStateSnapshot);
+      }
+    }
+  }
+
+  private handleReloadTriggeringChanges(changes: SimpleChanges) {
+    if (this.shouldTriggerReload(changes)) {
+      this.load();
+    }
+  }
+
+  private shouldTriggerReload(changes: SimpleChanges): boolean {
+    const reloadTriggeringKeys: (keyof NgxLoadWithDirective)[] = [
+      'ngxLoadWith',
+      'args',
+    ];
+    return reloadTriggeringKeys.some((key) => !!changes[key]);
   }
 
   // Load function management:
