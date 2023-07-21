@@ -8,6 +8,7 @@ import {
   OnDestroy,
   OnInit,
   Output,
+  SimpleChanges,
   TemplateRef,
   ViewContainerRef,
 } from '@angular/core';
@@ -223,8 +224,10 @@ export class NgxLoadWithDirective<T = unknown>
     this.load();
   }
 
-  ngOnChanges(): void {
-    this.load();
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['ngxLoadWith'] || changes['args']) {
+      this.load();
+    }
   }
 
   ngOnDestroy(): void {
