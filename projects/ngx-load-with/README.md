@@ -317,3 +317,7 @@ Contributions are welcome! See the [CONTRIBUTING](https://github.com/rensjaspers
 ## Credits
 
 This project is developed and managed by [Rens Jaspers](https://github.com/rensjaspers). It draws significant inspiration from [ngx-observe](https://github.com/nilsmehlhorn/ngx-observe) and [react-async](https://www.npmjs.com/package/react-async).
+
+<!--
+2024-02-03
+-->
