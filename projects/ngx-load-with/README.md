@@ -10,8 +10,10 @@ Welcome to `NgxLoadWith`, a powerful tool for Observable-based data loading in A
 [![CodeFactor](https://img.shields.io/codefactor/grade/github/rensjaspers/ngx-load-with)](https://www.codefactor.io/repository/github/rensjaspers/ngx-load-with)
 [![Codecov](https://img.shields.io/codecov/c/github/rensjaspers/ngx-load-with)](https://app.codecov.io/gh/rensjaspers/ngx-load-with)
 
-```html
-<div *ngxLoadWith="unreadCount$ as count">You have {{count}} unread messages</div>
+```angular
+<div *ngxLoadWith="unreadCount$ as count">
+  You have {{ count }} unread messages
+</div>
 <!-- Output: You have 0 unread messages -->
 ```
 
@@ -19,7 +21,7 @@ With the `*ngxLoadWith` directive, you can easily display data from an Observabl
 
 **Key features:**
 
-- 💡 **Automated UI State Management:** Automatically switch between loading, success, and error templates without the need of `*ngIf`.
+- 💡 **Declarative UI State Management:** Automates transitions between loading, success, and error states, no if-statements required.
 - 🚀 **Performance:** Optimized for efficiency, `NgxLoadWith` aligns seamlessly with Angular's OnPush change detection strategy for fluid UI updates.
 - 🛡️ **Memory Safety:** By automatically unsubscribing from Observables, `NgxLoadWith` guards your application against potential memory leaks.
 - ⚖️ **Lightweight and Independent:** As a lean library with no dependencies, `NgxLoadWith` integrates smoothly into any project.
@@ -82,9 +84,11 @@ Load data from an Observable and display it in your template:
 
 ⚡️ **[Live Example](https://stackblitz.com/edit/stackblitz-starters-hygzxn?file=src%2Fmain.ts)**
 
-```html
+```angular
 <ul *ngxLoadWith="todos$ as todos">
-  <li *ngFor="let todo of todos">{{todo.title}}</li>
+  @for (todo of todos; track todo.id) {
+    <li>{{ todo.title }}</li>
+  }
 </ul>
 ```
 
@@ -101,12 +105,16 @@ Display a loading message while data is being loaded, and an error message if an
 
 ⚡️ **[Live Example](https://stackblitz.com/edit/stackblitz-starters-ygxc6t?file=src%2Fmain.ts)**
 
-```html
-<ul *ngxLoadWith="todos$ as todos; loadingTemplate: loading; errorTemplate: error">
-  <li *ngFor="let todo of todos">{{todo.title}}</li>
+```angular
+<ul
+  *ngxLoadWith="todos$ as todos; loadingTemplate: loading; errorTemplate: error"
+>
+  @for (todo of todos; track todo.id) {
+    <li>{{ todo.title }}</li>
+  }
 </ul>
 <ng-template #loading>Loading...</ng-template>
-<ng-template #error let-error>{{error.message}}</ng-template>
+<ng-template #error let-error>{{ error.message }}</ng-template>
 ```
 
 ### Loading based on changes to other data
@@ -115,8 +123,10 @@ Display a loading message while data is being loaded, and an error message if an
 
 **Example 1: Fetching data using route parameters:**
 
-```html
-<div *ngxLoadWith="getTodo as todo; args: routeParams$ | async">{{todo.title}}</div>
+```angular
+<div *ngxLoadWith="getTodo as todo; args: routeParams$ | async">
+  {{ todo.title }}
+</div>
 ```
 
 ```typescript
@@ -132,10 +142,12 @@ export class MyComponent {
 
 **Example 2: Searching data based on user input:**
 
-```html
+```angular
 <input ngModel #searchbox />
 <ul *ngxLoadWith="findTodos as todos; args: searchbox.value; debounceTime: 300">
-  <li *ngFor="let todo of todos">{{todo.title}}</li>
+  @for (todo of todos; track todo.id) {
+    <li>{{ todo.title }}</li>
+  }
 </ul>
 ```
 
@@ -156,12 +168,14 @@ Reload data when a button is clicked:
 
 ⚡️ **[Live Example](https://stackblitz.com/edit/stackblitz-starters-eknilk?file=src%2Fmain.ts)**
 
-```html
+```angular
 <button (click)="todosLoader.load()">Reload</button>
 
 <ng-template #todosLoader="ngxLoadWith" [ngxLoadWith]="todos$" let-todos>
   <ul>
-    <li *ngFor="let todo of todos">{{todo.title}}</li>
+    @for (todo of todos; track todo.id) {
+      <li>{{ todo.title }}</li>
+    }
   </ul>
 </ng-template>
 ```
@@ -174,13 +188,23 @@ Reload data when a button is clicked, but display stale data while the new data 
 
 ⚡️ **[Live Example](https://stackblitz.com/edit/stackblitz-starters-vy9naj?file=src%2Fmain.ts)**
 
-```html
+```angular
 <button (click)="todosLoader.load()">Reload</button>
 
-<ng-template #todosLoader="ngxLoadWith" [ngxLoadWith]="todos$" [ngxLoadWithStaleData]="true" let-todos let-loading="loading">
-  <div *ngIf="loading">Reloading...</div>
+<ng-template
+  #todosLoader="ngxLoadWith"
+  [ngxLoadWith]="todos$"
+  [ngxLoadWithStaleData]="true"
+  let-todos
+  let-loading="loading"
+>
+  @if (loading) {
+    Reloading...
+  }
   <ul>
-    <li *ngFor="let todo of todos">{{todo.title}}</li>
+    @for (todo of todos; track todo.id) {
+      <li>{{ todo.title }}</li>
+    }
   </ul>
 </ng-template>
 ```
@@ -193,28 +217,39 @@ When using the `NgxLoadWithDirective`, you have two options for syntax:
 
 1. **Microsyntax:** This shorter, more compact syntax is easy to read and sufficient for many common use cases. For example:
 
-   ```html
+   ```angular
    <div *ngxLoadWith="getTodo as todo; args: id">...</div>
    ```
 
 2. **Normal syntax:** The longer form syntax is necessary when you need to create a directive reference in your template or listen to output events emitted by the directive. For example:
 
-   ```html
-   <ng-template #loader="ngxLoadWith" [ngxLoadWith]="getTodo" [ngxLoadWithArgs]="id" let-todo>
+   ```angular
+   <ng-template
+     #loader="ngxLoadWith"
+     [ngxLoadWith]="getTodo"
+     [ngxLoadWithArgs]="id"
+     let-todo
+   >
      <div>...</div>
    </ng-template>
    ```
 
    In this example, `#loader="ngxLoadWith"` creates a reference to the `NgxLoadWithDirective` instance, allowing you to call the `load()` method in your template:
 
-   ```html
+   ```angular
    <button (click)="loader.load()">Reload</button>
    ```
 
    Additionally, using the normal syntax allows you to listen to output events:
 
-   ```html
-   <ng-template #loader="ngxLoadWith" [ngxLoadWith]="getTodos" (loadSuccess)="onSuccess($event)" (loadError)="onError($event)" let-todos>
+   ```angular
+   <ng-template
+     #loader="ngxLoadWith"
+     [ngxLoadWith]="getTodos"
+     (loadSuccess)="onSuccess($event)"
+     (loadError)="onError($event)"
+     let-todos
+   >
      <div>...</div>
    </ng-template>
    ```
