@@ -1,9 +1,8 @@
-import { NgModule } from '@angular/core';
-import { NgxLoadWithDirective } from './ngx-load-with.directive';
+import { NgModule } from "@angular/core";
+import { NgxLoadWithDirective } from "./ngx-load-with.directive";
 
 @NgModule({
-  declarations: [NgxLoadWithDirective],
-  imports: [],
+  imports: [NgxLoadWithDirective],
   exports: [NgxLoadWithDirective],
 })
 export class NgxLoadWithModule {}
