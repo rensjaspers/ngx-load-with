@@ -20,7 +20,7 @@ import {
   timer,
 } from "rxjs";
 import { NgxLoadWithDirective } from "./ngx-load-with.directive";
-import { NgxLoadWithModule } from "ngx-load-with";
+import { NgxLoadWithModule } from "./ngx-load-with.module";
 
 @Component({
   template: `
