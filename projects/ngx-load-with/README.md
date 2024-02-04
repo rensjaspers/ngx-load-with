@@ -17,7 +17,7 @@ Welcome to `NgxLoadWith`, a powerful tool for Observable-based data loading in A
 <!-- Output: You have 0 unread messages -->
 ```
 
-With the `*ngxLoadWith` directive, you can easily display data from an Observable in your template. You won’t have to worry about performance, errors, or managing the loading state. Plus, it lets you handle reloading and more advanced tasks, all with minimal RxJS knowledge.
+With `NgxLoadWithDirective`, you can easily display data from an Observable in your template. You won’t have to worry about performance, errors, or managing the loading state. Plus, it lets you handle reloading and more advanced tasks, all with minimal RxJS knowledge.
 
 **Key Features:**
 
@@ -64,17 +64,21 @@ npm install ngx-load-with
 
 > Note: you need Angular version 16 or higher. For Angular 15, use `ngx-load-with@1`.
 
-To use `NgxLoadWith`, import the `NgxLoadWithModule` module in your Angular module:
+To use `NgxLoadWith`, import `NgxLoadWithDirective` in your Angular component:
 
 ```typescript
-import { NgxLoadWithModule } from "ngx-load-with";
+import { NgxLoadWithDirective } from "ngx-load-with";
 
-@NgModule({
-  imports: [NgxLoadWithModule],
-  declarations: [MyComponent],
+@Component({
+  selector: "app-my-component",
+  templateUrl: "./my-component.component.html",
+  standalone: true,
+  imports: [NgxLoadWithDirective],
 })
-export class MyModule {}
+export class MyComponent {}
 ```
+
+> Note: in projects using `NgModules`, `NgxLoadWithModule` can be imported in your Angular module.
 
 ## Usage
 
@@ -317,7 +321,3 @@ Contributions are welcome! See the [CONTRIBUTING](https://github.com/rensjaspers
 ## Credits
 
 This project is developed and managed by [Rens Jaspers](https://github.com/rensjaspers). It draws significant inspiration from [ngx-observe](https://github.com/nilsmehlhorn/ngx-observe) and [react-async](https://www.npmjs.com/package/react-async).
-
-<!--
-2024-02-03 21:07
--->
