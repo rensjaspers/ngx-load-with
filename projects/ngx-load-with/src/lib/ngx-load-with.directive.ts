@@ -11,7 +11,7 @@ import {
   SimpleChanges,
   TemplateRef,
   ViewContainerRef,
-} from '@angular/core';
+} from "@angular/core";
 import {
   Observable,
   Subject,
@@ -27,7 +27,7 @@ import {
   takeUntil,
   tap,
   timer,
-} from 'rxjs';
+} from "rxjs";
 
 export interface LoadingState<T = unknown> {
   loading: boolean;
@@ -62,7 +62,7 @@ interface ErrorUpdate {
   loading: boolean;
 }
 
-type LoadingPhase = 'loading' | 'loaded' | 'error';
+type LoadingPhase = "loading" | "loaded" | "error";
 
 type loadingPhaseHandlers<T> = {
   [K in LoadingPhase]: (state: LoadingState<T>) => void;
@@ -91,8 +91,9 @@ type LoadFn<T> = (args?: any) => Observable<T>;
  * - Ability to display previously loaded data while reloading.
  */
 @Directive({
-  selector: '[ngxLoadWith]',
-  exportAs: 'ngxLoadWith',
+  standalone: true,
+  selector: "[ngxLoadWith]",
+  exportAs: "ngxLoadWith",
 })
 export class NgxLoadWithDirective<T = unknown>
   implements OnInit, OnChanges, OnDestroy
@@ -103,8 +104,8 @@ export class NgxLoadWithDirective<T = unknown>
    * Directly passing a plain Observable is also supported, but note that in such cases, using the `ngxLoadWithArgs` input
    * for passing arguments to the `loadFn` function is not possible, as there's no mechanism to pass arguments to a plain Observable.
    */
-  @Input({ alias: 'ngxLoadWith', required: true }) set ngxLoadWith(
-    value: LoadFn<T> | Observable<T>
+  @Input({ alias: "ngxLoadWith", required: true }) set ngxLoadWith(
+    value: LoadFn<T> | Observable<T>,
   ) {
     if (value instanceof Observable) {
       this.loadFn = () => value;
@@ -116,12 +117,12 @@ export class NgxLoadWithDirective<T = unknown>
   /**
    * An optional argument to be passed to the `loadFn` function. Changes to this argument will trigger a reload.
    */
-  @Input('ngxLoadWithArgs') args: unknown;
+  @Input("ngxLoadWithArgs") args: unknown;
 
   /**
    * An optional template to be displayed while the data is being loaded.
    */
-  @Input('ngxLoadWithLoadingTemplate')
+  @Input("ngxLoadWithLoadingTemplate")
   loadingTemplate?: TemplateRef<unknown>;
 
   /**
@@ -129,21 +130,21 @@ export class NgxLoadWithDirective<T = unknown>
    * The template can access the `$implicit` property of the `ErrorTemplateContext` interface, which contains the error object.
    * The template can also access the `retry` function, which can be called to retry loading the data.
    */
-  @Input('ngxLoadWithErrorTemplate')
+  @Input("ngxLoadWithErrorTemplate")
   errorTemplate?: TemplateRef<ErrorTemplateContext>;
 
   /**
    * The amount of time in milliseconds to wait before triggering a reload when the `ngxLoadWithArgs` input changes.
    * If set to 0, the reload will be triggered immediately.
    */
-  @Input('ngxLoadWithDebounceTime') debounceTime = 0;
+  @Input("ngxLoadWithDebounceTime") debounceTime = 0;
 
   /**
    * A boolean indicating whether to use stale data when reloading.
    * If set to true, the directive will use the previously loaded data while reloading.
    * If set to false (default), the directive will clear the previously loaded data before reloading.
    */
-  @Input('ngxLoadWithStaleData') staleData = false;
+  @Input("ngxLoadWithStaleData") staleData = false;
 
   /**
    * An event emitted when the data loading process starts.
@@ -185,7 +186,7 @@ export class NgxLoadWithDirective<T = unknown>
   >();
   private readonly stop$ = merge(
     this.loadCancelTrigger,
-    this.loadingStateOverride
+    this.loadingStateOverride,
   );
 
   private readonly initialLoadingState: LoadingState<T> = {
@@ -204,19 +205,19 @@ export class NgxLoadWithDirective<T = unknown>
   private readonly loadingState$: Observable<LoadingState<T>> = merge(
     this.loadingStateOverride,
     this.getBeforeResultStateUpdates(),
-    this.getAfterResultStateUpdates()
+    this.getAfterResultStateUpdates(),
   ).pipe(
     scan(
       (state, update) => ({ ...state, ...update }),
-      this.initialLoadingState
+      this.initialLoadingState,
     ),
-    startWith(this.initialLoadingState)
+    startWith(this.initialLoadingState),
   );
 
   constructor(
     private templateRef: TemplateRef<LoadedTemplateContext<T>>,
     private viewContainer: ViewContainerRef,
-    private changeDetectorRef: ChangeDetectorRef
+    private changeDetectorRef: ChangeDetectorRef,
   ) {}
 
   // Lifecycle hooks:
@@ -228,8 +229,8 @@ export class NgxLoadWithDirective<T = unknown>
 
   ngOnChanges(changes: SimpleChanges): void {
     this.handleReloadTriggeringChanges(changes);
-    this.handleTemplateChanges(changes, 'loadingTemplate', 'loading');
-    this.handleTemplateChanges(changes, 'errorTemplate', 'error');
+    this.handleTemplateChanges(changes, "loadingTemplate", "loading");
+    this.handleTemplateChanges(changes, "errorTemplate", "error");
   }
 
   ngOnDestroy(): void {
@@ -280,7 +281,7 @@ export class NgxLoadWithDirective<T = unknown>
         tap((state) => {
           this.handleLoadingPhase(state);
         }),
-        takeUntil(this.directiveDestroyed)
+        takeUntil(this.directiveDestroyed),
       )
       .subscribe();
   }
@@ -295,12 +296,12 @@ export class NgxLoadWithDirective<T = unknown>
 
   private getLoadingPhase(state: LoadingState<T>): LoadingPhase {
     if (state.error) {
-      return 'error';
+      return "error";
     }
     if (state.loaded && (!state.loading || this.staleData)) {
-      return 'loaded';
+      return "loaded";
     }
-    return 'loading';
+    return "loading";
   }
 
   // Template management:
@@ -326,7 +327,7 @@ export class NgxLoadWithDirective<T = unknown>
     this.clearViewContainer();
     if (this.loadingTemplate) {
       this.loadingViewRef = this.viewContainer.createEmbeddedView(
-        this.loadingTemplate
+        this.loadingTemplate,
       );
     }
   }
@@ -342,7 +343,7 @@ export class NgxLoadWithDirective<T = unknown>
       this.clearViewContainer();
       this.loadedViewRef = this.viewContainer.createEmbeddedView(
         this.templateRef,
-        { $implicit: data, ngxLoadWith: data, loading }
+        { $implicit: data, ngxLoadWith: data, loading },
       );
     }
   }
@@ -357,16 +358,16 @@ export class NgxLoadWithDirective<T = unknown>
 
   private handleTemplateChanges(
     changes: SimpleChanges,
-    templateKey: 'loadingTemplate' | 'errorTemplate',
-    phase: LoadingPhase
+    templateKey: "loadingTemplate" | "errorTemplate",
+    phase: LoadingPhase,
   ): void {
     if (
       changes[templateKey] &&
       this.getLoadingPhase(this.loadingStateSnapshot) === phase
     ) {
-      if (phase === 'loading') {
+      if (phase === "loading") {
         this.renderLoadingTemplate();
-      } else if (phase === 'error') {
+      } else if (phase === "error") {
         this.handleErrorState(this.loadingStateSnapshot);
       }
     }
@@ -380,8 +381,8 @@ export class NgxLoadWithDirective<T = unknown>
 
   private shouldTriggerReload(changes: SimpleChanges): boolean {
     const reloadTriggeringKeys: (keyof NgxLoadWithDirective)[] = [
-      'ngxLoadWith',
-      'args',
+      "ngxLoadWith",
+      "args",
     ];
     return reloadTriggeringKeys.some((key) => !!changes[key]);
   }
@@ -390,7 +391,7 @@ export class NgxLoadWithDirective<T = unknown>
 
   private getBeforeResultStateUpdates(): Observable<LoadingUpdate> {
     return this.loadRequestTrigger.pipe(
-      map(() => ({ loading: true, error: null }))
+      map(() => ({ loading: true, error: null })),
     );
   }
 
@@ -400,7 +401,7 @@ export class NgxLoadWithDirective<T = unknown>
       tap(() => {
         this.loadStart.emit();
       }),
-      switchMap(() => this.executeLoadFnAndHandleResult())
+      switchMap(() => this.executeLoadFnAndHandleResult()),
     );
   }
 
@@ -416,7 +417,7 @@ export class NgxLoadWithDirective<T = unknown>
       finalize(() => {
         this.loadFinish.emit();
       }),
-      takeUntil(this.stop$)
+      takeUntil(this.stop$),
     );
   }
 
@@ -424,7 +425,7 @@ export class NgxLoadWithDirective<T = unknown>
     return of({ loading: false, error }).pipe(
       tap(() => {
         this.loadError.emit(error);
-      })
+      }),
     );
   }
 
@@ -436,7 +437,7 @@ export class NgxLoadWithDirective<T = unknown>
 
   static ngTemplateContextGuard<T>(
     _dir: NgxLoadWithDirective<T>,
-    _ctx: unknown
+    _ctx: unknown,
   ): _ctx is LoadedTemplateContext<T> {
     return true;
   }
