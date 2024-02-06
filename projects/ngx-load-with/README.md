@@ -25,7 +25,7 @@ With `NgxLoadWithDirective`, you can easily display data from an Observable in y
 - 🚀 **Performance:** Optimized for efficiency, aligns with Angular's OnPush change detection.
 - 🛡️ **Memory Safety:** Automatically unsubscribes from Observables to prevent memory leaks.
 - ⚖️ **Lightweight and Independent:** Zero dependencies, easily integrates into any project.
-- ⚡️ **Dynamic Data Loading:** Supports loading data based on dynamic parameters using RxJS.
+- ⚡️ **Dynamic Data Loading:** Supports loading data based on dynamic parameters.
 - 🎮 **Control Over Data Loading:** Offers methods for reloading and canceling requests.
 
 ## Table of Contents
