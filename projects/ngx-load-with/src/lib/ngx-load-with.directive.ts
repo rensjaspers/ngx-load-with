@@ -64,7 +64,7 @@ interface ErrorUpdate {
 
 type LoadingPhase = "loading" | "loaded" | "error";
 
-type loadingPhaseHandlers<T> = {
+type LoadingPhaseHandlers<T> = {
   [K in LoadingPhase]: (state: LoadingState<T>) => void;
 };
 
@@ -196,7 +196,7 @@ export class NgxLoadWithDirective<T = unknown>
 
   private loadingStateSnapshot = this.initialLoadingState;
 
-  private readonly loadingPhaseHandlers: loadingPhaseHandlers<T> = {
+  private readonly loadingPhaseHandlers: LoadingPhaseHandlers<T> = {
     loading: () => this.handleLoadingState(),
     loaded: (state) => this.handleLoadedState(state),
     error: (state) => this.handleErrorState(state),
