@@ -123,7 +123,7 @@ Display a loading message while data is being loaded, and an error message if an
 
 ### Loading based on changes to other data
 
-`NgxLoadWith` can respond to dynamic data changes using a function in place of a plain Observable. This function is invoked when the input arguments change.
+`NgxLoadWith` can respond to dynamic data changes if you pass it a function instead of a plain Observable. This function is invoked when the input arguments change.
 
 **Example 1: Fetching data using route parameters:**
 
