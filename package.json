@@ -37,7 +37,7 @@
     "ng-packagr": "^17.1.2",
     "prettier": "^3.4.2",
     "semantic-release": "^24.2.3",
-    "typescript": "~5.3.3"
+    "typescript": "~5.8.3"
   },
   "repository": {
     "type": "git",
