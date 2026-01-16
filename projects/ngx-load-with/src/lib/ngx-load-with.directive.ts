@@ -2,27 +2,22 @@ import {
   ChangeDetectorRef,
   Directive,
   EmbeddedViewRef,
-  EventEmitter,
-  Input,
-  OnChanges,
   OnDestroy,
-  OnInit,
-  Output,
-  SimpleChanges,
   TemplateRef,
   ViewContainerRef,
+  computed,
+  effect,
+  input,
+  output,
+  signal,
+  untracked,
 } from "@angular/core";
 import {
   Observable,
   Subject,
   catchError,
-  debounce,
   finalize,
-  map,
-  merge,
   of,
-  scan,
-  startWith,
   switchMap,
   takeUntil,
   tap,
@@ -46,27 +41,6 @@ export interface ErrorTemplateContext {
   $implicit: Error;
   retry: () => void;
 }
-
-interface LoadingUpdate {
-  loading: boolean;
-  error: null;
-}
-
-interface LoadedUpdate<T = unknown> {
-  loaded: boolean;
-  data?: T;
-}
-
-interface ErrorUpdate {
-  error?: Error | null;
-  loading: boolean;
-}
-
-type LoadingPhase = "loading" | "loaded" | "error";
-
-type LoadingPhaseHandlers<T> = {
-  [K in LoadingPhase]: (state: LoadingState<T>) => void;
-};
 
 // eslint-disable-next-line  @typescript-eslint/no-explicit-any
 type LoadFn<T> = (args?: any) => Observable<T>;
@@ -95,221 +69,199 @@ type LoadFn<T> = (args?: any) => Observable<T>;
   selector: "[ngxLoadWith]",
   exportAs: "ngxLoadWith",
 })
-export class NgxLoadWithDirective<T = unknown>
-  implements OnInit, OnChanges, OnDestroy
-{
-  /**
-   * This input accepts either a function returning an Observable of data to be loaded, or a plain Observable.
-   * If a function is provided, it can take optional arguments. Any changes in these arguments trigger a data reload.
-   * Directly passing a plain Observable is also supported, but note that in such cases, using the `ngxLoadWithArgs` input
-   * for passing arguments to the `loadFn` function is not possible, as there's no mechanism to pass arguments to a plain Observable.
-   */
-  @Input({ alias: "ngxLoadWith", required: true }) set ngxLoadWith(
-    value: LoadFn<T> | Observable<T>,
-  ) {
-    if (value instanceof Observable) {
-      this.loadFn = () => value;
-    } else {
-      this.loadFn = value;
-    }
-  }
+export class NgxLoadWithDirective<T = unknown> implements OnDestroy {
+  ngxLoadWith = input.required<LoadFn<T> | Observable<T>>({
+    alias: "ngxLoadWith",
+  });
 
-  /**
-   * An optional argument to be passed to the `loadFn` function. Changes to this argument will trigger a reload.
-   */
-  @Input("ngxLoadWithArgs") args: unknown;
+  args = input<unknown>(undefined, { alias: "ngxLoadWithArgs" });
 
-  /**
-   * An optional template to be displayed while the data is being loaded.
-   */
-  @Input("ngxLoadWithLoadingTemplate")
-  loadingTemplate?: TemplateRef<unknown>;
+  loadingTemplate = input<TemplateRef<unknown> | undefined>(undefined, {
+    alias: "ngxLoadWithLoadingTemplate",
+  });
 
-  /**
-   * An optional template to be displayed when an error occurs while loading the data.
-   * The template can access the `$implicit` property of the `ErrorTemplateContext` interface, which contains the error object.
-   * The template can also access the `retry` function, which can be called to retry loading the data.
-   */
-  @Input("ngxLoadWithErrorTemplate")
-  errorTemplate?: TemplateRef<ErrorTemplateContext>;
+  errorTemplate = input<TemplateRef<ErrorTemplateContext> | undefined>(
+    undefined,
+    { alias: "ngxLoadWithErrorTemplate" },
+  );
 
-  /**
-   * The amount of time in milliseconds to wait before triggering a reload when the `ngxLoadWithArgs` input changes.
-   * If set to 0, the reload will be triggered immediately.
-   */
-  @Input("ngxLoadWithDebounceTime") debounceTime = 0;
+  debounceTime = input(0, { alias: "ngxLoadWithDebounceTime" });
 
-  /**
-   * A boolean indicating whether to use stale data when reloading.
-   * If set to true, the directive will use the previously loaded data while reloading.
-   * If set to false (default), the directive will clear the previously loaded data before reloading.
-   */
-  @Input("ngxLoadWithStaleData") staleData = false;
+  staleData = input(false, { alias: "ngxLoadWithStaleData" });
 
-  /**
-   * An event emitted when the data loading process starts.
-   */
-  @Output() loadStart = new EventEmitter<void>();
+  loadStart = output<void>();
+  loadSuccess = output<T>();
+  loadError = output<Error>();
+  loadFinish = output<void>();
+  loadingStateChange = output<LoadingState<T>>();
 
-  /**
-   * An event emitted when the data loading process is successful.
-   * The event payload is the loaded data of type `T`.
-   */
-  @Output() loadSuccess = new EventEmitter<T>();
-
-  /**
-   * An event emitted when an error occurs while loading the data.
-   * The event payload is the error object of type `Error`.
-   */
-  @Output() loadError = new EventEmitter<Error>();
-
-  /**
-   * An event emitted when the data loading process finishes, regardless of whether it was successful or not.
-   */
-  @Output() loadFinish = new EventEmitter<void>();
-
-  /**
-   * An event emitted when the loading state changes.
-   * The event payload is the current loading state of type `LoadingState<T>`.
-   */
-  @Output() loadingStateChange = new EventEmitter<LoadingState<T>>();
-
-  private loadFn!: LoadFn<T>;
   private loadedViewRef?: EmbeddedViewRef<LoadedTemplateContext<T>>;
   private loadingViewRef?: EmbeddedViewRef<unknown>;
+  private readonly destroyed$ = new Subject<void>();
+  private readonly loadTrigger$ = new Subject<void>();
 
-  private readonly loadRequestTrigger = new Subject<void>();
-  private readonly loadCancelTrigger = new Subject<void>();
-  private readonly directiveDestroyed = new Subject<void>();
-  private readonly loadingStateOverride = new Subject<
-    Partial<LoadingState<T>>
-  >();
-  private readonly stop$ = merge(
-    this.loadCancelTrigger,
-    this.loadingStateOverride,
-  );
-
-  private readonly initialLoadingState: LoadingState<T> = {
+  private loadingState = signal<LoadingState<T>>({
     loading: false,
     loaded: false,
-  };
+    error: null,
+    data: undefined,
+  });
 
-  private loadingStateSnapshot = this.initialLoadingState;
-
-  private readonly loadingPhaseHandlers: LoadingPhaseHandlers<T> = {
-    loading: () => this.handleLoadingState(),
-    loaded: (state) => this.handleLoadedState(state),
-    error: (state) => this.handleErrorState(state),
-  };
-
-  private readonly loadingState$: Observable<LoadingState<T>> = merge(
-    this.loadingStateOverride,
-    this.getBeforeResultStateUpdates(),
-    this.getAfterResultStateUpdates(),
-  ).pipe(
-    scan(
-      (state, update) => ({ ...state, ...update }),
-      this.initialLoadingState,
-    ),
-    startWith(this.initialLoadingState),
-  );
+  private loadFn = computed(() => {
+    const value = this.ngxLoadWith();
+    return value instanceof Observable ? () => value : value;
+  });
 
   constructor(
     private templateRef: TemplateRef<LoadedTemplateContext<T>>,
     private viewContainer: ViewContainerRef,
     private changeDetectorRef: ChangeDetectorRef,
-  ) {}
+  ) {
+    // Effect to handle state changes and rendering
+    effect(() => {
+      const state = this.loadingState();
+      untracked(() => {
+        this.handleLoadingPhase(state);
+        this.loadingStateChange.emit(state);
+        this.changeDetectorRef.markForCheck();
+      });
+    });
 
-  // Lifecycle hooks:
+    // Effect to trigger loads when inputs change
+    effect(() => {
+      this.ngxLoadWith();
+      this.args();
+      untracked(() => this.load());
+    });
 
-  ngOnInit(): void {
-    this.monitorAndHandleLoadingState();
-    this.load();
-  }
+    // Effect to re-render templates when they change
+    effect(() => {
+      const loadingTpl = this.loadingTemplate();
+      const errorTpl = this.errorTemplate();
+      const state = untracked(() => this.loadingState());
+      const phase = untracked(() => this.getLoadingPhase(state));
+      
+      untracked(() => {
+        if (phase === "loading" && loadingTpl !== undefined) {
+          this.renderLoadingTemplate();
+        } else if (phase === "error" && errorTpl !== undefined) {
+          this.handleErrorState(state);
+        }
+      });
+    });
 
-  ngOnChanges(changes: SimpleChanges): void {
-    this.handleReloadTriggeringChanges(changes);
-    this.handleTemplateChanges(changes, "loadingTemplate", "loading");
-    this.handleTemplateChanges(changes, "errorTemplate", "error");
+    // Set up the loading pipeline
+    this.setupLoadPipeline();
   }
 
   ngOnDestroy(): void {
-    this.directiveDestroyed.next();
+    this.destroyed$.next();
+    this.destroyed$.complete();
   }
 
-  // Public API:
-
-  /**
-   * Triggers a reload of the data. Previous load requests are cancelled.
-   */
   load(): void {
-    this.cancel();
-    this.loadRequestTrigger.next();
+    this.loadTrigger$.next();
   }
 
-  /**
-   * Cancels any pending load requests.
-   */
   cancel(): void {
-    this.loadCancelTrigger.next();
-  }
-
-  /**
-   * Updates the loading state as if the passed data were loaded through the `loadWith` function.
-   */
-  setData(data: T): void {
-    this.loadingStateOverride.next({
-      loaded: true,
+    this.loadingState.set({
+      ...this.loadingState(),
       loading: false,
-      data,
-      error: null,
     });
   }
 
-  /**
-   * Updates the loading state as if the passed error were thrown by `loadWith` function.
-   */
-  setError(error: Error): void {
-    this.loadingStateOverride.next({ error });
+  setData(data: T): void {
+    this.loadingState.set({
+      loading: false,
+      loaded: true,
+      error: null,
+      data,
+    });
   }
 
-  // State management:
+  setError(error: Error): void {
+    this.loadingState.set({
+      ...this.loadingState(),
+      error,
+      loading: false,
+    });
+  }
 
-  private monitorAndHandleLoadingState() {
-    this.loadingState$
+  private setupLoadPipeline(): void {
+    this.loadTrigger$
       .pipe(
-        tap((state) => {
-          this.handleLoadingPhase(state);
+        tap(() => {
+          this.loadingState.update((state) => ({
+            ...state,
+            loading: true,
+            error: null,
+          }));
         }),
-        takeUntil(this.directiveDestroyed),
+        switchMap(() => {
+          const deb = this.debounceTime();
+          return deb > 0 ? timer(deb) : of(null);
+        }),
+        tap(() => this.loadStart.emit()),
+        switchMap(() => {
+          const fn = this.loadFn();
+          const args = this.args();
+          return fn(args).pipe(
+            tap((data) => {
+              this.loadSuccess.emit(data);
+              this.loadingState.set({
+                loading: false,
+                loaded: true,
+                error: null,
+                data,
+              });
+            }),
+            catchError((error) => {
+              this.loadError.emit(error);
+              this.loadingState.set({
+                ...this.loadingState(),
+                loading: false,
+                error,
+              });
+              return of(null);
+            }),
+            finalize(() => this.loadFinish.emit()),
+            takeUntil(this.loadTrigger$),
+          );
+        }),
+        takeUntil(this.destroyed$),
       )
       .subscribe();
   }
 
-  private handleLoadingPhase(state: LoadingState<T>) {
-    this.loadingStateSnapshot = state;
-    this.loadingStateChange.emit(state);
+  private handleLoadingPhase(state: LoadingState<T>): void {
     const phase = this.getLoadingPhase(state);
-    this.loadingPhaseHandlers[phase](state);
-    this.changeDetectorRef.markForCheck();
+
+    if (phase === "error") {
+      this.handleErrorState(state);
+    } else if (phase === "loading") {
+      this.handleLoadingState();
+    } else {
+      this.handleLoadedState(state);
+    }
   }
 
-  private getLoadingPhase(state: LoadingState<T>): LoadingPhase {
+  private getLoadingPhase(
+    state: LoadingState<T>,
+  ): "loading" | "loaded" | "error" {
     if (state.error) {
       return "error";
     }
-    if (state.loaded && (!state.loading || this.staleData)) {
+    if (state.loaded && (!state.loading || this.staleData())) {
       return "loaded";
     }
     return "loading";
   }
 
-  // Template management:
-
   private handleErrorState(state: LoadingState<T>): void {
     this.clearViewContainer();
-    if (this.errorTemplate) {
-      this.viewContainer.createEmbeddedView(this.errorTemplate, {
+    const template = this.errorTemplate();
+    if (template) {
+      this.viewContainer.createEmbeddedView(template, {
         $implicit: state.error as Error,
         retry: () => this.load(),
       });
@@ -323,18 +275,18 @@ export class NgxLoadWithDirective<T = unknown>
     this.renderLoadingTemplate();
   }
 
-  private renderLoadingTemplate() {
+  private renderLoadingTemplate(): void {
     this.clearViewContainer();
-    if (this.loadingTemplate) {
-      this.loadingViewRef = this.viewContainer.createEmbeddedView(
-        this.loadingTemplate,
-      );
+    const template = this.loadingTemplate();
+    if (template) {
+      this.loadingViewRef = this.viewContainer.createEmbeddedView(template);
     }
   }
 
   private handleLoadedState(state: LoadingState<T>): void {
     const data = state.data as T;
     const loading = state.loading;
+
     if (this.loadedViewRef) {
       this.loadedViewRef.context.$implicit = data;
       this.loadedViewRef.context.ngxLoadWith = data;
@@ -348,92 +300,11 @@ export class NgxLoadWithDirective<T = unknown>
     }
   }
 
-  private clearViewContainer() {
+  private clearViewContainer(): void {
     this.viewContainer.clear();
     this.loadedViewRef = undefined;
     this.loadingViewRef = undefined;
   }
-
-  // Input change management:
-
-  private handleTemplateChanges(
-    changes: SimpleChanges,
-    templateKey: "loadingTemplate" | "errorTemplate",
-    phase: LoadingPhase,
-  ): void {
-    if (
-      changes[templateKey] &&
-      this.getLoadingPhase(this.loadingStateSnapshot) === phase
-    ) {
-      if (phase === "loading") {
-        this.renderLoadingTemplate();
-      } else if (phase === "error") {
-        this.handleErrorState(this.loadingStateSnapshot);
-      }
-    }
-  }
-
-  private handleReloadTriggeringChanges(changes: SimpleChanges) {
-    if (this.shouldTriggerReload(changes)) {
-      this.load();
-    }
-  }
-
-  private shouldTriggerReload(changes: SimpleChanges): boolean {
-    const reloadTriggeringKeys: (keyof NgxLoadWithDirective)[] = [
-      "ngxLoadWith",
-      "args",
-    ];
-    return reloadTriggeringKeys.some((key) => !!changes[key]);
-  }
-
-  // Load function management:
-
-  private getBeforeResultStateUpdates(): Observable<LoadingUpdate> {
-    return this.loadRequestTrigger.pipe(
-      map(() => ({ loading: true, error: null })),
-    );
-  }
-
-  private getAfterResultStateUpdates() {
-    return this.loadRequestTrigger.pipe(
-      debounce(() => this.getDebounceFinished()),
-      tap(() => {
-        this.loadStart.emit();
-      }),
-      switchMap(() => this.executeLoadFnAndHandleResult()),
-    );
-  }
-
-  private executeLoadFnAndHandleResult(): Observable<
-    LoadedUpdate<T> | ErrorUpdate
-  > {
-    return this.loadFn(this.args).pipe(
-      tap((data) => {
-        this.loadSuccess.emit(data);
-      }),
-      map((data) => ({ loading: false, loaded: true, data })),
-      catchError((error) => this.handleDataLoadingError(error)),
-      finalize(() => {
-        this.loadFinish.emit();
-      }),
-      takeUntil(this.stop$),
-    );
-  }
-
-  private handleDataLoadingError(error: Error): Observable<ErrorUpdate> {
-    return of({ loading: false, error }).pipe(
-      tap(() => {
-        this.loadError.emit(error);
-      }),
-    );
-  }
-
-  private getDebounceFinished() {
-    return timer(this.debounceTime || 0).pipe(takeUntil(this.stop$));
-  }
-
-  // Type guards:
 
   static ngTemplateContextGuard<T>(
     _dir: NgxLoadWithDirective<T>,

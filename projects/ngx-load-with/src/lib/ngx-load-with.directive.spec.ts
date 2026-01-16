@@ -20,9 +20,10 @@ import {
   timer,
 } from "rxjs";
 import { NgxLoadWithDirective } from "./ngx-load-with.directive";
-import { NgxLoadWithModule } from "./ngx-load-with.module";
 
 @Component({
+  standalone: true,
+  imports: [NgxLoadWithDirective],
   template: `
     <button id="load" (click)="loader.load()"></button>
     <ng-template
@@ -68,8 +69,7 @@ describe("NgxLoadWithDirective", () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [TestComponent],
-      imports: [NgxLoadWithModule],
+      imports: [TestComponent],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TestComponent);
