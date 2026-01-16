@@ -188,14 +188,12 @@ describe("NgxLoadWithDirective", () => {
     component.staleData = true;
 
     fixture.detectChanges();
-
-    const loadButton = fixture.nativeElement.querySelector("#load");
-    loadButton.click();
-    tick(1500); // allow time for the first load to complete
+    tick(1500); // allow time for the initial load to complete
     fixture.detectChanges();
-
+    
     expect(getTextContent()).toEqual("test1");
 
+    const loadButton = fixture.nativeElement.querySelector("#load");
     loadButton.click();
     tick(500); // only partial wait to simulate reloading
     fixture.detectChanges();
@@ -391,24 +389,30 @@ describe("NgxLoadWithDirective", () => {
   });
 
   it("should call loadStart and loadFinish event emitters", fakeAsync(() => {
-    fixture.detectChanges();
-    spyOn(component.loader.loadStart, "emit");
-    spyOn(component.loader.loadFinish, "emit");
-    fixture.detectChanges();
+    fixture.detectChanges(); // Initialize the component
+    
+    const loadStartSpy = spyOn(component.loader.loadStart, "emit");
+    const loadFinishSpy = spyOn(component.loader.loadFinish, "emit");
+    
+    component.loader.load(); // Trigger a manual load
     tick();
     fixture.detectChanges();
-    expect(component.loader.loadStart.emit).toHaveBeenCalled();
-    expect(component.loader.loadFinish.emit).toHaveBeenCalled();
+    
+    expect(loadStartSpy).toHaveBeenCalled();
+    expect(loadFinishSpy).toHaveBeenCalled();
   }));
 
   it("should call loadError when an error occurs", fakeAsync(() => {
+    fixture.detectChanges(); // Initialize first
+    
+    const loadErrorSpy = spyOn(component.loader.loadError, "emit");
     component.loadWith = () => throwError(() => new Error("An error occurred"));
-    fixture.detectChanges();
-    spyOn(component.loader.loadError, "emit");
-    fixture.detectChanges();
+    
+    component.loader.load(); // Trigger a manual load with the error function
     tick();
     fixture.detectChanges();
-    expect(component.loader.loadError.emit).toHaveBeenCalled();
+    
+    expect(loadErrorSpy).toHaveBeenCalled();
   }));
 
   it("should call loadingStateChange when loading state changes", fakeAsync(() => {
