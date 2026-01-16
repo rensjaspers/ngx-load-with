@@ -17,6 +17,7 @@ import {
   Subject,
   catchError,
   finalize,
+  merge,
   of,
   switchMap,
   takeUntil,
@@ -99,6 +100,7 @@ export class NgxLoadWithDirective<T = unknown> implements OnDestroy {
   private loadingViewRef?: EmbeddedViewRef<unknown>;
   private readonly destroyed$ = new Subject<void>();
   private readonly loadTrigger$ = new Subject<void>();
+  private readonly cancelTrigger$ = new Subject<void>();
 
   private loadingState = signal<LoadingState<T>>({
     loading: false,
@@ -164,6 +166,7 @@ export class NgxLoadWithDirective<T = unknown> implements OnDestroy {
   }
 
   cancel(): void {
+    this.cancelTrigger$.next();
     this.loadingState.set({
       ...this.loadingState(),
       loading: false,
@@ -190,18 +193,28 @@ export class NgxLoadWithDirective<T = unknown> implements OnDestroy {
   private setupLoadPipeline(): void {
     this.loadTrigger$
       .pipe(
-        tap(() => {
+        switchMap(() => {
+          const deb = this.debounceTime();
+          if (deb > 0) {
+            return timer(deb).pipe(
+              tap(() => {
+                this.loadingState.update((state) => ({
+                  ...state,
+                  loading: true,
+                  error: null,
+                }));
+                this.loadStart.emit();
+              }),
+            );
+          }
           this.loadingState.update((state) => ({
             ...state,
             loading: true,
             error: null,
           }));
+          this.loadStart.emit();
+          return of(null);
         }),
-        switchMap(() => {
-          const deb = this.debounceTime();
-          return deb > 0 ? timer(deb) : of(null);
-        }),
-        tap(() => this.loadStart.emit()),
         switchMap(() => {
           const fn = this.loadFn();
           const args = this.args();
@@ -225,7 +238,7 @@ export class NgxLoadWithDirective<T = unknown> implements OnDestroy {
               return of(null);
             }),
             finalize(() => this.loadFinish.emit()),
-            takeUntil(this.loadTrigger$),
+            takeUntil(merge(this.cancelTrigger$, this.loadTrigger$)),
           );
         }),
         takeUntil(this.destroyed$),
